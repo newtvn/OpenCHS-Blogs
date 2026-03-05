@@ -19,7 +19,7 @@ export default function BlogListPage() {
       <div className="mb-4">
         <h1 className="text-4xl font-semibold md:text-5xl">Blog</h1>
         <p className={`mt-4 max-w-2xl text-lg ${palette.subtle}`}>
-          Articles, case studies, and technical insights from the openCHS community.
+          Articles, case studies, and technical insights from the OpenCHS community.
         </p>
       </div>
 

@@ -7,14 +7,14 @@ export default function LicensePage() {
     <div className="mx-auto w-full max-w-3xl px-6 py-16 lg:px-12">
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">License</h1>
       <p className={`mb-12 text-lg ${palette.subtle}`}>
-        openCHS is free and open source software.
+        OpenCHS is free and open source software.
       </p>
 
       <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
         <h2 className="mb-4 text-2xl font-semibold">GNU General Public License v3.0</h2>
         <div className={`space-y-4 leading-relaxed ${palette.subtle}`}>
           <p>
-            openCHS is licensed under the GNU General Public License v3.0 (GPL-3.0). This means you are free to:
+            OpenCHS is licensed under the GNU General Public License v3.0 (GPL-3.0). This means you are free to:
           </p>
           <ul className="list-inside list-disc space-y-2 pl-4">
             <li><strong className="text-inherit">Use</strong> — Run the software for any purpose, including commercial use</li>
@@ -34,15 +34,15 @@ export default function LicensePage() {
           <h3 className="pt-4 text-lg font-semibold text-inherit">Why GPL-3.0?</h3>
           <p>
             We chose GPL-3.0 because we believe child protection technology should be free and open.
-            The GPL ensures that any improvements made to openCHS benefit the entire community.
-            Organizations that modify and deploy openCHS must share their improvements back,
+            The GPL ensures that any improvements made to OpenCHS benefit the entire community.
+            Organizations that modify and deploy OpenCHS must share their improvements back,
             creating a virtuous cycle of innovation for child protection.
           </p>
 
           <h3 className="pt-4 text-lg font-semibold text-inherit">Full License Text</h3>
           <p>
             The complete GPL-3.0 license text is available in the LICENSE file in the
-            openCHS GitHub repository.
+            OpenCHS GitHub repository.
           </p>
         </div>
       </div>
@@ -50,7 +50,7 @@ export default function LicensePage() {
       <div className={`mt-8 rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
         <h2 className="mb-4 text-xl font-semibold">Third-Party Licenses</h2>
         <p className={`mb-4 ${palette.subtle}`}>
-          openCHS uses various open source libraries and tools, each with their own licenses.
+          OpenCHS uses various open source libraries and tools, each with their own licenses.
           A complete list of dependencies and their licenses is maintained in the repository.
         </p>
         <div className={`space-y-2 text-sm ${palette.subtle}`}>

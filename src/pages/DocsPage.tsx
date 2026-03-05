@@ -9,7 +9,7 @@ const sections = [
     icon: Zap,
     title: "Getting Started",
     content: [
-      "openCHS is a two-service platform consisting of the Helpline Service (case management) and the AI Service (intelligent augmentation). Both can be deployed independently or together.",
+      "OpenCHS is a two-service platform consisting of the Helpline Service (case management) and the AI Service (intelligent augmentation). Both can be deployed independently or together.",
       "Prerequisites: Node.js 18+, PostgreSQL 14+, Docker (optional but recommended).",
       "Quick start with Docker:",
       "git clone https://github.com/openchs/openchs-platform.git\ncd openchs-platform\ndocker-compose up -d",
@@ -21,7 +21,7 @@ const sections = [
     icon: Server,
     title: "Architecture Overview",
     content: [
-      "openCHS follows a microservices architecture with two primary services communicating through a well-defined REST API layer.",
+      "OpenCHS follows a microservices architecture with two primary services communicating through a well-defined REST API layer.",
       "The Helpline Service handles: case intake and management, workflow orchestration, user and role management, reporting and analytics, multi-tenant data isolation.",
       "The AI Service provides: real-time speech-to-text transcription, sentiment and emotion analysis, risk severity scoring, intelligent case categorization and routing, automated case summarization.",
       "Both services use PostgreSQL for persistence, Redis for caching and session management, and communicate via authenticated REST endpoints with JWT tokens.",
@@ -32,7 +32,7 @@ const sections = [
     icon: Globe,
     title: "Deployment Guide",
     content: [
-      "openCHS supports multiple deployment strategies depending on your scale and infrastructure.",
+      "OpenCHS supports multiple deployment strategies depending on your scale and infrastructure.",
       "Single Server: Suitable for small deployments (< 50 concurrent users). Both services run on a single machine with Docker Compose. Minimum requirements: 4 CPU cores, 8GB RAM, 100GB SSD.",
       "Kubernetes: Recommended for production deployments. Helm charts are provided for both services with configurable replicas, resource limits, and auto-scaling policies.",
       "Cloud-native: Terraform modules are available for AWS, Azure, and GCP. These provision all required infrastructure including managed databases, load balancers, and monitoring.",
@@ -43,7 +43,7 @@ const sections = [
     icon: Shield,
     title: "Security",
     content: [
-      "Security is foundational to openCHS given the sensitive nature of child protection data.",
+      "Security is foundational to OpenCHS given the sensitive nature of child protection data.",
       "Encryption: All data is encrypted at rest (AES-256) and in transit (TLS 1.3). Database-level encryption is supported for additional protection.",
       "Authentication: OAuth 2.0 with JWT tokens. Support for LDAP, Active Directory, and SAML SSO integrations. Multi-factor authentication is available.",
       "Authorization: Fine-grained role-based access control (RBAC) with configurable roles and permissions. Default roles include Counselor, Supervisor, Administrator, and Auditor.",
@@ -55,7 +55,7 @@ const sections = [
     icon: Database,
     title: "Database Schema",
     content: [
-      "The openCHS database schema is designed for flexibility and multi-tenancy.",
+      "The OpenCHS database schema is designed for flexibility and multi-tenancy.",
       "Core tables: organizations, users, cases, contacts, workflows, workflow_stages, referrals, follow_ups, audit_logs.",
       "Multi-tenancy is implemented at the row level using an organization_id foreign key on all tenant-scoped tables. PostgreSQL Row Level Security (RLS) policies ensure data isolation.",
       "Full-text search is powered by PostgreSQL's built-in tsvector/tsquery capabilities, with GIN indexes on case content, contact notes, and transcription text.",
@@ -67,7 +67,7 @@ const sections = [
     icon: BookOpen,
     title: "Configuration Reference",
     content: [
-      "openCHS is configured through environment variables and a YAML configuration file.",
+      "OpenCHS is configured through environment variables and a YAML configuration file.",
       "Key environment variables: DATABASE_URL, REDIS_URL, JWT_SECRET, AI_SERVICE_URL, STORAGE_PROVIDER, ENCRYPTION_KEY.",
       "The YAML configuration file (config.yml) supports: custom intake form definitions, workflow stage configurations, notification templates, integration adapter settings, reporting templates.",
       "All configuration changes can be made without restarting the service — the platform watches for configuration file changes and applies them in real time.",
@@ -84,7 +84,7 @@ export default function DocsPage() {
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Documentation</h1>
-      <p className={`mb-12 text-lg ${palette.subtle}`}>Everything you need to deploy, configure, and extend openCHS.</p>
+      <p className={`mb-12 text-lg ${palette.subtle}`}>Everything you need to deploy, configure, and extend OpenCHS.</p>
 
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
         {/* Sidebar */}

@@ -35,7 +35,7 @@ export default function ApiReferencePage() {
     <div className="mx-auto w-full max-w-4xl px-6 py-16 lg:px-12">
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">API Reference</h1>
       <p className={`mb-4 text-lg ${palette.subtle}`}>
-        RESTful API endpoints for the openCHS platform. All endpoints require authentication via JWT bearer token.
+        RESTful API endpoints for the OpenCHS platform. All endpoints require authentication via JWT bearer token.
       </p>
       <div className={`mb-12 rounded-lg border p-4 text-sm ${palette.border} ${palette.highlight}`}>
         <p><strong>Base URL:</strong> <code>https://your-instance.openchs.org/api/v1</code></p>

@@ -114,7 +114,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="mx-auto max-w-7xl px-6 lg:px-12">
           <div className="grid gap-8 md:grid-cols-4">
             <div>
-              <h3 className="mb-4 text-lg font-semibold">openCHS</h3>
+              <h3 className="mb-4 text-lg font-semibold">OpenCHS</h3>
               <p className={`text-sm ${palette.subtle}`}>AI-powered child protection platform</p>
             </div>
             <div>
@@ -143,7 +143,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className={`mt-12 border-t pt-8 text-center text-sm ${palette.border} ${palette.subtle}`}>
-            <p>&copy; 2024 openCHS. Funded by UNICEF Venture Fund. Built by BITZ IT Consulting Ltd.</p>
+            <p>&copy; 2024 OpenCHS. Funded by UNICEF Venture Fund. Built by BITZ IT Consulting Ltd.</p>
           </div>
         </div>
       </footer>

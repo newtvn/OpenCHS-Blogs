@@ -57,7 +57,7 @@ export default function HomePage() {
 
   const faqs = [
     { q: "How can I contribute a blog post?", a: "Contact us via email with your article proposal and draft. We welcome contributions from anyone passionate about child protection technology." },
-    { q: "Is openCHS really open source?", a: "Yes, fully open source under GPL-3.0 license on GitHub. You can view, fork, and contribute to the entire codebase." },
+    { q: "Is OpenCHS really open source?", a: "Yes, fully open source under GPL-3.0 license on GitHub. You can view, fork, and contribute to the entire codebase." },
     { q: "How can organizations fund the project?", a: "Reach out through our contact form or email to discuss partnership and funding opportunities. We work with NGOs, governments, and private sector partners." },
   ];
 
@@ -72,7 +72,7 @@ export default function HomePage() {
       >
         <header className="flex flex-col gap-8">
           <div className="flex items-center gap-4 text-xs uppercase tracking-[0.3em]">
-            <span className={`rounded-full border px-4 py-1 ${palette.border} ${palette.accent}`}>openCHS AI</span>
+            <span className={`rounded-full border px-4 py-1 ${palette.border} ${palette.accent}`}>OpenCHS AI</span>
             <span className={palette.subtle}>Blog &amp; Community</span>
           </div>
           <div className="space-y-6">
@@ -80,7 +80,7 @@ export default function HomePage() {
               Protecting Children<br />Through Technology
             </h1>
             <p className={`max-w-3xl text-lg md:text-xl ${palette.subtle}`}>
-              Discover insights, impact stories, and technical deep-dives from the openCHS community.
+              Discover insights, impact stories, and technical deep-dives from the OpenCHS community.
               Join us in revolutionizing child protection with AI-powered solutions.
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function HomePage() {
           <div className="grid gap-8 lg:grid-cols-2">
             <div>
               <h2 className="mb-4 text-3xl font-semibold md:text-4xl">Get in Touch</h2>
-              <p className={`mb-6 ${palette.subtle}`}>Interested in collaborating, funding, or learning more about openCHS? Reach out to us.</p>
+              <p className={`mb-6 ${palette.subtle}`}>Interested in collaborating, funding, or learning more about OpenCHS? Reach out to us.</p>
               <div className="space-y-4">
                 <div className="flex items-center gap-3"><Mail className="h-5 w-5" /><span>contact@openchs.org</span></div>
                 <div className="flex items-center gap-3"><MapPin className="h-5 w-5" /><span>Nairobi, Kenya</span></div>

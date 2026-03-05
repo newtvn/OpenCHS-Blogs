@@ -17,12 +17,12 @@ interface ForumThread {
 }
 
 const threads: ForumThread[] = [
-  { id: 1, title: "Best practices for deploying openCHS in low-bandwidth environments", author: "Newtvn", category: "Deployment", replies: 12, likes: 24, lastActivity: "2 hours ago", preview: "We've been working on deploying openCHS in rural Kenya where bandwidth is limited. Here are some strategies we've found effective..." },
+  { id: 1, title: "Best practices for deploying OpenCHS in low-bandwidth environments", author: "Newtvn", category: "Deployment", replies: 12, likes: 24, lastActivity: "2 hours ago", preview: "We've been working on deploying OpenCHS in rural Kenya where bandwidth is limited. Here are some strategies we've found effective..." },
   { id: 2, title: "Custom workflow stages for child trafficking cases", author: "Rodgendo", category: "Configuration", replies: 8, likes: 16, lastActivity: "5 hours ago", preview: "Our organization needs specific workflow stages for trafficking cases. Has anyone customized the workflow engine for this use case?" },
-  { id: 3, title: "Integrating openCHS with WhatsApp Business API", author: "Newtvn", category: "Integrations", replies: 15, likes: 31, lastActivity: "1 day ago", preview: "We've successfully integrated openCHS with WhatsApp Business API for incoming case reports. Here's a guide..." },
+  { id: 3, title: "Integrating OpenCHS with WhatsApp Business API", author: "Newtvn", category: "Integrations", replies: 15, likes: 31, lastActivity: "1 day ago", preview: "We've successfully integrated OpenCHS with WhatsApp Business API for incoming case reports. Here's a guide..." },
   { id: 4, title: "AI risk scoring accuracy improvements in v2.4", author: "Rodgendo", category: "AI & ML", replies: 6, likes: 19, lastActivity: "2 days ago", preview: "The new risk scoring model in v2.4 has significantly improved accuracy. We ran benchmarks comparing v2.3 vs v2.4..." },
   { id: 5, title: "Multi-language support: adding Swahili and Amharic", author: "Newtvn", category: "Localization", replies: 22, likes: 45, lastActivity: "3 days ago", preview: "We're working on adding Swahili and Amharic language support to both the UI and AI transcription. Contributors welcome!" },
-  { id: 6, title: "Compliance with GDPR for European deployments", author: "Rodgendo", category: "Legal & Compliance", replies: 9, likes: 14, lastActivity: "1 week ago", preview: "For organizations deploying openCHS in the EU, here's a compliance checklist we've developed for GDPR requirements..." },
+  { id: 6, title: "Compliance with GDPR for European deployments", author: "Rodgendo", category: "Legal & Compliance", replies: 9, likes: 14, lastActivity: "1 week ago", preview: "For organizations deploying OpenCHS in the EU, here's a compliance checklist we've developed for GDPR requirements..." },
 ];
 
 const forumCategories = ["All", "Deployment", "Configuration", "Integrations", "AI & ML", "Localization", "Legal & Compliance"];
@@ -38,7 +38,7 @@ export default function ForumPage() {
     <div className="mx-auto w-full max-w-4xl px-6 py-16 lg:px-12">
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Community Forum</h1>
       <p className={`mb-8 text-lg ${palette.subtle}`}>
-        Discuss, ask questions, and share knowledge with the openCHS community.
+        Discuss, ask questions, and share knowledge with the OpenCHS community.
       </p>
 
       {/* Categories */}

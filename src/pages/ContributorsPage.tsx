@@ -18,7 +18,7 @@ export default function ContributorsPage() {
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Contributors</h1>
       <p className={`mb-12 max-w-2xl text-lg ${palette.subtle}`}>
-        openCHS is built by a passionate community of developers, designers, and child protection experts.
+        OpenCHS is built by a passionate community of developers, designers, and child protection experts.
       </p>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -70,7 +70,7 @@ export default function ContributorsPage() {
           <div className="text-center">
             <ExternalLink className="mx-auto mb-4 h-10 w-10" />
             <h3 className="mb-2 font-semibold">Spread the Word</h3>
-            <p className={`mb-4 text-sm ${palette.subtle}`}>Share openCHS with your network and help us grow the community.</p>
+            <p className={`mb-4 text-sm ${palette.subtle}`}>Share OpenCHS with your network and help us grow the community.</p>
             <Link to="/blog">
               <Button variant="outline" size="sm">Read Our Blog</Button>
             </Link>

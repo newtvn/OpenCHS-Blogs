@@ -21,7 +21,7 @@ export default function ContactPage() {
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Contact Us</h1>
       <p className={`mb-12 max-w-2xl text-lg ${palette.subtle}`}>
-        Have questions, want to collaborate, or interested in deploying openCHS? We'd love to hear from you.
+        Have questions, want to collaborate, or interested in deploying OpenCHS? We'd love to hear from you.
       </p>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -65,7 +65,7 @@ export default function ContactPage() {
             <h2 className="mb-4 text-xl font-semibold">What can we help with?</h2>
             <div className="space-y-3">
               {[
-                { icon: MessageSquare, text: "Deploying openCHS for your organization" },
+                { icon: MessageSquare, text: "Deploying OpenCHS for your organization" },
                 { icon: MessageSquare, text: "Partnership and funding opportunities" },
                 { icon: MessageSquare, text: "Technical support and consulting" },
                 { icon: MessageSquare, text: "Contributing to the open source project" },
