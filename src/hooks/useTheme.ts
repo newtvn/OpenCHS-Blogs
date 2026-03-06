@@ -21,22 +21,53 @@ const getRootTheme = (): "light" | "dark" => {
 };
 
 /**
+ * Applies the "dark" class to `<html>` so that:
+ *  - CSS variables in `.dark { … }` activate (for shadcn/ui components)
+ *  - Tailwind's `dark:` modifier works
+ */
+const applyThemeClass = (theme: "light" | "dark") => {
+  const root = document.documentElement;
+  if (theme === "dark") {
+    root.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+  }
+};
+
+/**
  * Reactive hook that tracks the current light/dark theme.
  *
- * Watches `<html>` class / data-theme mutations via MutationObserver
- * and listens to `prefers-color-scheme` media query changes so the
- * UI re-renders automatically when the user's OS theme flips.
+ * On mount and on every OS theme change it:
+ *  1. Reads the effective theme (via class, data-attr, or media query)
+ *  2. Applies the `dark` class to `<html>` so CSS variables + Tailwind `dark:` stay in sync
+ *  3. Re-renders consumers with the new value
  */
 export const useThemeSync = () => {
-  const [theme, setTheme] = useState<"light" | "dark">(getRootTheme);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const initial = getRootTheme();
+    applyThemeClass(initial);
+    return initial;
+  });
 
   useEffect(() => {
+    // Temporarily disconnect observer while we mutate classList to avoid infinite loop
+    let suppressObserver = false;
+
     const sync = () => {
+      if (suppressObserver) return;
       const next = getRootTheme();
+      suppressObserver = true;
+      applyThemeClass(next);
+      suppressObserver = false;
       setTheme((prev) => (prev === next ? prev : next));
     };
 
-    const observer = new MutationObserver(sync);
+    // Initial sync — applies .dark class on first render
+    sync();
+
+    const observer = new MutationObserver(() => {
+      if (!suppressObserver) sync();
+    });
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class", "data-theme"],
