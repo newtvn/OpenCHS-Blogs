@@ -1,4 +1,7 @@
 import { usePalette } from "@/hooks/useTheme";
+import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import CopyButton from "@/components/CopyButton";
 
 const endpoints = [
   { method: "GET", path: "/api/v1/cases", desc: "List all cases with pagination, filtering, and sorting" },
@@ -22,49 +25,18 @@ const endpoints = [
 ];
 
 const methodColors: Record<string, string> = {
-  GET: "text-green-400 bg-green-400/10 border-green-400/20",
-  POST: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-  PUT: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
-  DELETE: "text-red-400 bg-red-400/10 border-red-400/20",
+  GET: "text-green-600 bg-green-500/10 border-green-500/20 dark:text-green-400",
+  POST: "text-blue-600 bg-blue-500/10 border-blue-500/20 dark:text-blue-400",
+  PUT: "text-yellow-600 bg-yellow-500/10 border-yellow-500/20 dark:text-yellow-400",
+  DELETE: "text-red-600 bg-red-500/10 border-red-500/20 dark:text-red-400",
 };
 
-export default function ApiReferencePage() {
-  const { palette } = usePalette();
-
-  return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-16 lg:px-12">
-      <h1 className="mb-2 text-4xl font-semibold md:text-5xl">API Reference</h1>
-      <p className={`mb-4 text-lg ${palette.subtle}`}>
-        RESTful API endpoints for the OpenCHS platform. All endpoints require authentication via JWT bearer token.
-      </p>
-      <div className={`mb-12 rounded-lg border p-4 text-sm ${palette.border} ${palette.highlight}`}>
-        <p><strong>Base URL:</strong> <code>https://your-instance.openchs.org/api/v1</code></p>
-        <p className={`mt-1 ${palette.subtle}`}>Authentication: <code>Authorization: Bearer &lt;token&gt;</code></p>
-      </div>
-
-      <div className="space-y-3">
-        {endpoints.map((ep, idx) => (
-          <div key={idx} className={`flex flex-col gap-2 rounded-xl border p-4 sm:flex-row sm:items-center sm:gap-4 ${palette.border} ${palette.card}`}>
-            <span className={`inline-flex w-fit rounded-md border px-2.5 py-0.5 text-xs font-bold ${methodColors[ep.method]}`}>
-              {ep.method}
-            </span>
-            <code className="text-sm font-medium">{ep.path}</code>
-            <span className={`text-sm sm:ml-auto ${palette.subtle}`}>{ep.desc}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className={`mt-12 rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
-        <h2 className="mb-4 text-xl font-semibold">Example Request</h2>
-        <pre className={`overflow-x-auto rounded-lg border p-4 text-sm ${palette.border} ${palette.highlight}`}>
-          <code>{`curl -X GET https://your-instance.openchs.org/api/v1/cases \\
+const exampleRequest = `curl -X GET https://your-instance.openchs.org/api/v1/cases \\
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \\
   -H "Content-Type: application/json" \\
-  -d '{"page": 1, "limit": 20, "status": "open"}'`}</code>
-        </pre>
-        <h2 className="mb-4 mt-8 text-xl font-semibold">Example Response</h2>
-        <pre className={`overflow-x-auto rounded-lg border p-4 text-sm ${palette.border} ${palette.highlight}`}>
-          <code>{`{
+  -d '{"page": 1, "limit": 20, "status": "open"}'`;
+
+const exampleResponse = `{
   "data": [
     {
       "id": "case_abc123",
@@ -81,8 +53,52 @@ export default function ApiReferencePage() {
     "limit": 20,
     "total": 1543
   }
-}`}</code>
-        </pre>
+}`;
+
+export default function ApiReferencePage() {
+  const { palette } = usePalette();
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-6 py-16 lg:px-12">
+      <SEO title="API Reference" description="RESTful API endpoints for the OpenCHS platform." />
+      <Breadcrumbs items={[{ label: "Docs", to: "/docs" }, { label: "API Reference" }]} />
+
+      <h1 className="mb-2 text-4xl font-semibold md:text-5xl">API Reference</h1>
+      <p className={`mb-4 text-lg ${palette.subtle}`}>
+        RESTful API endpoints for the OpenCHS platform. All endpoints require authentication via JWT bearer token.
+      </p>
+      <div className={`mb-12 rounded-lg border p-4 text-sm ${palette.border} ${palette.highlight}`}>
+        <p><strong>Base URL:</strong> <code>https://your-instance.openchs.org/api/v1</code></p>
+        <p className={`mt-1 ${palette.subtle}`}>Authentication: <code>Authorization: Bearer &lt;token&gt;</code></p>
+      </div>
+
+      <div className="space-y-3">
+        {endpoints.map((ep, idx) => (
+          <div key={idx} className={`flex flex-col gap-2 rounded-xl border p-4 sm:flex-row sm:items-center sm:gap-4 ${palette.border} ${palette.card}`}>
+            <span className={`inline-flex w-fit rounded-md border px-2.5 py-0.5 text-xs font-bold ${methodColors[ep.method]}`} aria-label={`${ep.method} method`}>
+              {ep.method}
+            </span>
+            <code className="text-sm font-medium">{ep.path}</code>
+            <span className={`text-sm sm:ml-auto ${palette.subtle}`}>{ep.desc}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className={`mt-12 rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
+        <h2 className="mb-4 text-xl font-semibold">Example Request</h2>
+        <div className="relative">
+          <pre className={`overflow-x-auto rounded-lg border p-4 pr-12 text-sm ${palette.border} ${palette.highlight}`}>
+            <code>{exampleRequest}</code>
+          </pre>
+          <CopyButton text={exampleRequest} />
+        </div>
+        <h2 className="mb-4 mt-8 text-xl font-semibold">Example Response</h2>
+        <div className="relative">
+          <pre className={`overflow-x-auto rounded-lg border p-4 pr-12 text-sm ${palette.border} ${palette.highlight}`}>
+            <code>{exampleResponse}</code>
+          </pre>
+          <CopyButton text={exampleResponse} />
+        </div>
       </div>
     </div>
   );

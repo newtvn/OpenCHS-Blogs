@@ -3,6 +3,8 @@ import { Mail, MapPin, Phone, Send, MessageSquare, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePalette } from "@/hooks/useTheme";
+import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export default function ContactPage() {
   const { palette } = usePalette();
@@ -19,6 +21,9 @@ export default function ContactPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
+      <SEO title="Contact" description="Get in touch with the OpenCHS team for questions, partnerships, or deployment support." />
+      <Breadcrumbs items={[{ label: "Contact" }]} />
+
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Contact Us</h1>
       <p className={`mb-12 max-w-2xl text-lg ${palette.subtle}`}>
         Have questions, want to collaborate, or interested in deploying OpenCHS? We'd love to hear from you.
@@ -34,7 +39,7 @@ export default function ContactPage() {
                 <Mail className="mt-1 h-5 w-5 flex-shrink-0" />
                 <div>
                   <div className="font-medium">Email</div>
-                  <div className={palette.subtle}>contact@openchs.org</div>
+                  <a href="mailto:contact@openchs.org" className={`hover:underline ${palette.subtle}`}>contact@openchs.org</a>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -48,7 +53,7 @@ export default function ContactPage() {
                 <Phone className="mt-1 h-5 w-5 flex-shrink-0" />
                 <div>
                   <div className="font-medium">Phone</div>
-                  <div className={palette.subtle}>+254 700 000 000</div>
+                  <a href="tel:+254700000000" className={`hover:underline ${palette.subtle}`}>+254 700 000 000</a>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -65,15 +70,15 @@ export default function ContactPage() {
             <h2 className="mb-4 text-xl font-semibold">What can we help with?</h2>
             <div className="space-y-3">
               {[
-                { icon: MessageSquare, text: "Deploying OpenCHS for your organization" },
-                { icon: MessageSquare, text: "Partnership and funding opportunities" },
-                { icon: MessageSquare, text: "Technical support and consulting" },
-                { icon: MessageSquare, text: "Contributing to the open source project" },
-                { icon: MessageSquare, text: "Media inquiries and press" },
-              ].map((item, idx) => (
+                "Deploying OpenCHS for your organization",
+                "Partnership and funding opportunities",
+                "Technical support and consulting",
+                "Contributing to the open source project",
+                "Media inquiries and press",
+              ].map((text, idx) => (
                 <div key={idx} className="flex items-center gap-3">
-                  <item.icon className={`h-4 w-4 ${palette.subtle}`} />
-                  <span className={`text-sm ${palette.subtle}`}>{item.text}</span>
+                  <MessageSquare className={`h-4 w-4 flex-shrink-0 ${palette.subtle}`} />
+                  <span className={`text-sm ${palette.subtle}`}>{text}</span>
                 </div>
               ))}
             </div>
@@ -84,7 +89,7 @@ export default function ContactPage() {
         <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
           <h2 className="mb-6 text-2xl font-semibold">Send a Message</h2>
           {submitted && (
-            <div className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-center text-green-400">
+            <div className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-center text-green-600 dark:text-green-400">
               Message sent successfully! We'll get back to you within 24 hours.
             </div>
           )}
@@ -103,7 +108,15 @@ export default function ContactPage() {
             </div>
             <div>
               <label htmlFor="message" className="mb-2 block text-sm font-medium">Message *</label>
-              <textarea id="message" rows={6} placeholder="Tell us about your interest or question..." value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className={`w-full rounded-lg border bg-transparent px-3 py-2 text-sm ${palette.border}`} required />
+              <textarea
+                id="message"
+                rows={6}
+                placeholder="Tell us about your interest or question..."
+                value={form.message}
+                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                className={`w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 dark:focus:border-neutral-400 dark:focus:ring-neutral-400 ${palette.border}`}
+                required
+              />
             </div>
             <Button type="submit" className="w-full">Send Message <Send className="ml-2 h-4 w-4" /></Button>
           </form>

@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { usePalette } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
+import BackToTop from "@/components/BackToTop";
+import GDPRBanner from "@/components/GDPRBanner";
 
 const STYLE_ID = "openchs-animations";
 
@@ -10,22 +12,27 @@ const navLinks = [
   { to: "/", label: "Home" },
   { to: "/blog", label: "Blog" },
   { to: "/docs", label: "Docs" },
+  { to: "/api-reference", label: "API" },
+  { to: "/forum", label: "Forum" },
   { to: "/contributors", label: "Contributors" },
   { to: "/contact", label: "Contact" },
 ];
+
+function isActive(pathname: string, to: string) {
+  if (to === "/") return pathname === "/";
+  return pathname === to || pathname.startsWith(to + "/");
+}
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { palette } = usePalette();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Scroll to top on route change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     setMobileOpen(false);
   }, [location.pathname]);
 
-  // Inject keyframes
   useEffect(() => {
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement("style");
@@ -46,6 +53,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`relative isolate min-h-screen overflow-hidden transition-colors duration-700 ${palette.surface}`}>
+      {/* Skip to content */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-white">
+        Skip to content
+      </a>
+
       {/* Backgrounds */}
       <div
         className="pointer-events-none fixed inset-0 -z-20"
@@ -60,25 +72,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       />
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-transparent">
+      <nav className="sticky top-0 z-50 bg-transparent" role="navigation" aria-label="Main navigation">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-12">
-          <Link to="/" className="text-lg font-bold tracking-tight">
+          <Link to="/" className="text-xl font-bold tracking-tight">
             OpenCHS AI
           </Link>
 
           {/* Desktop nav */}
           <div className="hidden items-center gap-1 md:flex">
-            {navLinks.map((link) => (
-              <Link key={link.to} to={link.to}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={location.pathname === link.to ? "underline underline-offset-4" : ""}
-                >
-                  {link.label}
-                </Button>
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const active = isActive(location.pathname, link.to);
+              return (
+                <Link key={link.to} to={link.to} aria-current={active ? "page" : undefined}>
+                  <Button
+                    variant="ghost"
+                    className={`text-base ${active ? "underline underline-offset-4" : ""}`}
+                  >
+                    {link.label}
+                  </Button>
+                </Link>
+              );
+            })}
           </div>
 
           {/* Mobile toggle */}
@@ -86,6 +100,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className="md:hidden"
             onClick={() => setMobileOpen((o) => !o)}
             aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -94,23 +109,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Mobile nav */}
         {mobileOpen && (
           <div className={`border-t px-6 pb-4 md:hidden ${palette.border}`}>
-            {navLinks.map((link) => (
-              <Link key={link.to} to={link.to} className="block py-3" onClick={() => setMobileOpen(false)}>
-                <span className={location.pathname === link.to ? "font-semibold underline underline-offset-4" : ""}>
-                  {link.label}
-                </span>
-              </Link>
-            ))}
-
+            {navLinks.map((link) => {
+              const active = isActive(location.pathname, link.to);
+              return (
+                <Link key={link.to} to={link.to} className="block py-3" onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined}>
+                  <span className={active ? "font-semibold underline underline-offset-4" : ""}>
+                    {link.label}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         )}
       </nav>
 
       {/* Main content */}
-      <main className="min-h-[60vh]">{children}</main>
+      <main id="main-content" className="min-h-[60vh]">{children}</main>
 
       {/* Footer */}
-      <footer className="py-12">
+      <footer className="py-12" role="contentinfo">
         <div className="mx-auto max-w-7xl px-6 lg:px-12">
           <div className="grid gap-8 md:grid-cols-4">
             <div>
@@ -122,7 +139,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <ul className={`space-y-2 text-sm ${palette.subtle}`}>
                 <li><Link to="/docs" className="hover:underline">Documentation</Link></li>
                 <li><Link to="/api-reference" className="hover:underline">API Reference</Link></li>
-                <li><a href="https://github.com/openchs" target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a></li>
+                <li><a href="https://github.com/openchlai" target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a></li>
               </ul>
             </div>
             <div>
@@ -143,10 +160,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className={`mt-12 border-t pt-8 text-center text-sm ${palette.border} ${palette.subtle}`}>
-            <p>&copy; 2024 OpenCHS. Funded by UNICEF Venture Fund. Built by BITZ IT Consulting Ltd.</p>
+            <p>&copy; 2025 OpenCHS. Funded by UNICEF Venture Fund. Built by BITZ-IT.</p>
           </div>
         </div>
       </footer>
+
+      <BackToTop />
+      <GDPRBanner />
     </div>
   );
 }

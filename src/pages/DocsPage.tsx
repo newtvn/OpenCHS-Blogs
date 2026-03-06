@@ -1,7 +1,10 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { BookOpen, Server, Shield, Database, Zap, Globe, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { BookOpen, Server, Shield, Database, Zap, Globe, ChevronRight, ChevronDown } from "lucide-react";
 import { usePalette } from "@/hooks/useTheme";
+import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import CopyButton from "@/components/CopyButton";
 
 const sections = [
   {
@@ -12,7 +15,7 @@ const sections = [
       "OpenCHS is a two-service platform consisting of the Helpline Service (case management) and the AI Service (intelligent augmentation). Both can be deployed independently or together.",
       "Prerequisites: Node.js 18+, PostgreSQL 14+, Docker (optional but recommended).",
       "Quick start with Docker:",
-      "git clone https://github.com/openchs/openchs-platform.git\ncd openchs-platform\ndocker-compose up -d",
+      "git clone https://github.com/openchlai/openchs-platform.git\ncd openchs-platform\ndocker-compose up -d",
       "The platform will be available at http://localhost:3000 with default admin credentials provided in the .env.example file. Change these immediately in production.",
     ],
   },
@@ -77,35 +80,72 @@ const sections = [
 
 export default function DocsPage() {
   const { palette } = usePalette();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState("getting-started");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Deep-linking via query param: /docs?section=security
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section && sections.some((s) => s.id === section)) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
+
+  // Update URL query param when section changes (preserves HashRouter compatibility)
+  const selectSection = (id: string) => {
+    setActiveSection(id);
+    setMobileSidebarOpen(false);
+    setSearchParams({ section: id }, { replace: true });
+  };
 
   const current = sections.find((s) => s.id === activeSection)!;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
+      <SEO title="Documentation" description="Everything you need to deploy, configure, and extend OpenCHS." />
+      <Breadcrumbs items={[{ label: "Docs" }]} />
+
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Documentation</h1>
       <p className={`mb-12 text-lg ${palette.subtle}`}>Everything you need to deploy, configure, and extend OpenCHS.</p>
 
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+        {/* Mobile sidebar toggle */}
+        <button
+          className={`flex w-full items-center justify-between rounded-xl border p-4 lg:hidden ${palette.border} ${palette.card}`}
+          onClick={() => setMobileSidebarOpen((o) => !o)}
+          aria-expanded={mobileSidebarOpen}
+          aria-label="Toggle documentation sections"
+        >
+          <span className="flex items-center gap-2 font-medium">
+            <current.icon className="h-4 w-4" />
+            {current.title}
+          </span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${mobileSidebarOpen ? "rotate-180" : ""}`} />
+        </button>
+
         {/* Sidebar */}
-        <aside className={`rounded-2xl border p-4 lg:sticky lg:top-24 lg:self-start ${palette.border} ${palette.card}`}>
-          <nav className="space-y-1">
-            {sections.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setActiveSection(s.id)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${
-                  activeSection === s.id ? `font-semibold ${palette.highlight}` : `${palette.subtle} hover:${palette.highlight}`
-                }`}
-              >
-                <s.icon className="h-4 w-4 flex-shrink-0" />
-                {s.title}
-                {activeSection === s.id && <ChevronRight className="ml-auto h-4 w-4" />}
-              </button>
-            ))}
-          </nav>
-          <div className={`mt-6 border-t pt-4 ${palette.border}`}>
-            <Link to="/api-reference" className={`block text-sm hover:underline ${palette.subtle}`}>API Reference &rarr;</Link>
+        <aside className={`${mobileSidebarOpen ? "block" : "hidden"} lg:block`}>
+          <div className={`rounded-2xl border p-4 lg:sticky lg:top-24 lg:self-start ${palette.border} ${palette.card}`}>
+            <nav className="space-y-1" aria-label="Documentation sections">
+              {sections.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => selectSection(s.id)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                    activeSection === s.id ? `font-semibold ${palette.highlight}` : `${palette.subtle} hover:bg-neutral-100 dark:hover:bg-neutral-900`
+                  }`}
+                  aria-current={activeSection === s.id ? "true" : undefined}
+                >
+                  <s.icon className="h-4 w-4 flex-shrink-0" />
+                  {s.title}
+                  {activeSection === s.id && <ChevronRight className="ml-auto h-4 w-4" />}
+                </button>
+              ))}
+            </nav>
+            <div className={`mt-6 border-t pt-4 ${palette.border}`}>
+              <Link to="/api-reference" className={`block text-sm hover:underline ${palette.subtle}`}>API Reference &rarr;</Link>
+            </div>
           </div>
         </aside>
 
@@ -118,9 +158,12 @@ export default function DocsPage() {
           <div className="space-y-4">
             {current.content.map((block, idx) => (
               block.includes("\n") ? (
-                <pre key={idx} className={`overflow-x-auto rounded-lg border p-4 text-sm ${palette.border} ${palette.highlight}`}>
-                  <code>{block}</code>
-                </pre>
+                <div key={idx} className="relative">
+                  <pre className={`overflow-x-auto rounded-lg border p-4 pr-12 text-sm ${palette.border} ${palette.highlight}`}>
+                    <code>{block}</code>
+                  </pre>
+                  <CopyButton text={block} />
+                </div>
               ) : (
                 <p key={idx} className={`text-base leading-relaxed ${palette.subtle}`}>{block}</p>
               )

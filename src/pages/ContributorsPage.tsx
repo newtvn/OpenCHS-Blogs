@@ -3,6 +3,8 @@ import { Github, ExternalLink, Heart } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { usePalette } from "@/hooks/useTheme";
+import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 const contributors = [
   { name: "Newtvn", role: "Design Engineer", contributions: 342, areas: ["UI/UX Design", "Frontend", "Responsive Design", "Accessibility"] },
@@ -16,6 +18,9 @@ export default function ContributorsPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
+      <SEO title="Contributors" description="Meet the team behind OpenCHS — developers, designers, and child protection experts." />
+      <Breadcrumbs items={[{ label: "Contributors" }]} />
+
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Contributors</h1>
       <p className={`mb-12 max-w-2xl text-lg ${palette.subtle}`}>
         OpenCHS is built by a passionate community of developers, designers, and child protection experts.
@@ -55,7 +60,7 @@ export default function ContributorsPage() {
             <Github className="mx-auto mb-4 h-10 w-10" />
             <h3 className="mb-2 font-semibold">Fork & Contribute</h3>
             <p className={`mb-4 text-sm ${palette.subtle}`}>Browse open issues, submit PRs, and help improve the platform.</p>
-            <a href="https://github.com/openchs" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/openchlai" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">View on GitHub <ExternalLink className="ml-2 h-3 w-3" /></Button>
             </a>
           </div>

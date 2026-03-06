@@ -20,7 +20,7 @@ export const blogPosts: BlogPost[] = [
       "Every year, millions of children in crisis reach out to helplines — but the systems meant to protect them are often paper-based, slow, and fragmented. OpenCHS is changing that with AI-powered case management.",
     category: "Technology & Social Impact",
     author: "Newtvn",
-    published: "Jan 15, 2024",
+    published: "Jan 15, 2025",
     readTime: 6,
     image:
       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop",
@@ -43,7 +43,7 @@ export const blogPosts: BlogPost[] = [
       "At the heart of OpenCHS are two components that work seamlessly together to protect children. The Helpline Service manages cases, while the AI Service supercharges every interaction.",
     category: "Product",
     author: "Rodgendo",
-    published: "Jan 20, 2024",
+    published: "Jan 20, 2025",
     readTime: 8,
     image:
       "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop",
@@ -66,7 +66,7 @@ export const blogPosts: BlogPost[] = [
       "Before OpenCHS, Kenya's national child helpline struggled with 45-minute response times. Twelve months after deployment, response time dropped to 3.2 minutes — a 93% improvement.",
     category: "Case Studies & Impact",
     author: "Newtvn",
-    published: "Feb 1, 2024",
+    published: "Feb 1, 2025",
     readTime: 5,
     image:
       "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&auto=format&fit=crop",
@@ -88,7 +88,7 @@ export const blogPosts: BlogPost[] = [
       "When a child calls a helpline, every second matters. The OpenCHS AI Service ensures that no detail is ever lost and no child slips through the cracks with real-time transcription and analysis.",
     category: "AI & Technology",
     author: "Rodgendo",
-    published: "Feb 10, 2024",
+    published: "Feb 10, 2025",
     readTime: 5,
     image:
       "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop",
@@ -112,7 +112,7 @@ export const blogPosts: BlogPost[] = [
       "OpenCHS is fully open source under GPL-3.0, built from the ground up with integration in mind. Whether you're a developer, government agency, or NGO, the OpenCHS API gives you everything you need.",
     category: "Developer",
     author: "Newtvn",
-    published: "Feb 15, 2024",
+    published: "Feb 15, 2025",
     readTime: 6,
     image:
       "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop",
@@ -135,7 +135,7 @@ export const blogPosts: BlogPost[] = [
       "When a platform handles the stories of children in crisis, governance and ethics aren't optional. They're the foundation. Learn how OpenCHS earns trust through transparency and oversight.",
     category: "Governance & Ethics",
     author: "Rodgendo",
-    published: "Feb 20, 2024",
+    published: "Feb 20, 2025",
     readTime: 4,
     image:
       "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&auto=format&fit=crop",

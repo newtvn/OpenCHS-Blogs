@@ -1,10 +1,15 @@
 import { usePalette } from "@/hooks/useTheme";
+import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export default function LicensePage() {
   const { palette } = usePalette();
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-16 lg:px-12">
+      <SEO title="License" description="OpenCHS is free and open source software licensed under GPL-3.0." />
+      <Breadcrumbs items={[{ label: "License" }]} />
+
       <h1 className="mb-2 text-4xl font-semibold md:text-5xl">License</h1>
       <p className={`mb-12 text-lg ${palette.subtle}`}>
         OpenCHS is free and open source software.

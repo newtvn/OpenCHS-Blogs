@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/</loc><priority>1.0</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/blog</loc><priority>0.9</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/docs</loc><priority>0.8</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/api-reference</loc><priority>0.8</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/forum</loc><priority>0.7</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/contributors</loc><priority>0.6</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/contact</loc><priority>0.6</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/privacy</loc><priority>0.3</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/terms</loc><priority>0.3</priority></url>
+  <url><loc>https://newtvn.github.io/OpenCHS-Blogs/#/license</loc><priority>0.3</priority></url>
+</urlset>

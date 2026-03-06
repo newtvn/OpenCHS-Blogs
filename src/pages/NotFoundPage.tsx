@@ -2,12 +2,14 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePalette } from "@/hooks/useTheme";
+import SEO from "@/components/SEO";
 
 export default function NotFoundPage() {
   const { palette } = usePalette();
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6">
+      <SEO title="Page Not Found" description="The page you're looking for doesn't exist." />
       <div className="text-center">
         <h1 className="mb-4 text-8xl font-bold">404</h1>
         <p className={`mb-8 text-xl ${palette.subtle}`}>Page not found</p>

@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Heart, Users, TrendingUp, BookOpen, Code, Mail, MapPin, Phone, Send, ChevronDown } from "lucide-react";
+import { ArrowRight, Heart, Code, Mail, MapPin, Phone, Send, ChevronDown, GitPullRequest, PenLine, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { usePalette } from "@/hooks/useTheme";
-import { blogPosts, categories, getPostsByCategory } from "@/data/blogPosts";
+import { blogPosts, getPostsByCategory } from "@/data/blogPosts";
+import LazyImage from "@/components/LazyImage";
+import SEO from "@/components/SEO";
+
+const filterCategories = [
+  { label: "All", value: "All" },
+  { label: "Technology", value: "Technology & Social Impact" },
+  { label: "Product", value: "Product" },
+  { label: "Impact", value: "Case Studies & Impact" },
+  { label: "AI", value: "AI & Technology" },
+  { label: "Developer", value: "Developer" },
+  { label: "Governance", value: "Governance & Ethics" },
+];
 
 export default function HomePage() {
   const { palette } = usePalette();
@@ -32,12 +44,6 @@ export default function HomePage() {
   }, []);
 
   const filteredPosts = getPostsByCategory(activeCategory);
-  const displayCategories = categories.map((c) =>
-    c === "Technology & Social Impact" ? "Technology" :
-    c === "Case Studies & Impact" ? "Impact" :
-    c === "AI & Technology" ? "Technology" :
-    c === "Governance & Ethics" ? "Governance" : c
-  ).filter((v, i, a) => a.indexOf(v) === i);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +69,8 @@ export default function HomePage() {
 
   return (
     <>
+      <SEO />
+
       {/* Hero */}
       <section
         ref={sectionRef}
@@ -91,7 +99,7 @@ export default function HomePage() {
           <div className={`relative overflow-hidden rounded-3xl border backdrop-blur-xl ${palette.border} ${palette.card}`}>
             <div className="grid gap-8 lg:grid-cols-2">
               <div className="relative aspect-[16/10] lg:aspect-auto">
-                <img src={blogPosts[0].image} alt={blogPosts[0].title} className="h-full w-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0" />
+                <LazyImage src={blogPosts[0].image} alt={blogPosts[0].title} className="h-full w-full grayscale transition-all duration-500 group-hover:grayscale-0" />
               </div>
               <div className="flex flex-col justify-center gap-6 p-8 lg:p-12">
                 <div className="flex items-center gap-3">
@@ -101,9 +109,7 @@ export default function HomePage() {
                 <h2 className="text-3xl font-semibold leading-tight group-hover:underline md:text-4xl">{blogPosts[0].title}</h2>
                 <p className={`text-base ${palette.subtle}`}>{blogPosts[0].summary}</p>
                 <div className="flex items-center gap-4 text-sm">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{blogPosts[0].author[0]}</AvatarFallback>
-                  </Avatar>
+                  <Avatar className="h-8 w-8"><AvatarFallback>{blogPosts[0].author[0]}</AvatarFallback></Avatar>
                   <span>{blogPosts[0].author}</span>
                   <span className={palette.subtle}>&bull;</span>
                   <span className={palette.subtle}>{blogPosts[0].published}</span>
@@ -122,18 +128,15 @@ export default function HomePage() {
         <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-3xl font-semibold md:text-4xl">Latest Articles</h2>
           <div className="flex flex-wrap gap-2">
-            {displayCategories.map((cat) => (
+            {filterCategories.map((cat) => (
               <Button
-                key={cat}
+                key={cat.value}
                 variant="outline"
                 size="sm"
-                className={`${activeCategory === cat || (cat === "All" && activeCategory === "All") ? "ring-2 ring-neutral-400" : ""} ${palette.accent}`}
-                onClick={() => {
-                  if (cat === "Technology") setActiveCategory(activeCategory === "Technology & Social Impact" ? "AI & Technology" : "Technology & Social Impact");
-                  else setActiveCategory(cat === "Impact" ? "Case Studies & Impact" : cat === "Governance" ? "Governance & Ethics" : cat);
-                }}
+                className={`${activeCategory === cat.value ? "ring-2 ring-neutral-400" : ""} ${palette.accent}`}
+                onClick={() => setActiveCategory(cat.value)}
               >
-                {cat}
+                {cat.label}
               </Button>
             ))}
           </div>
@@ -144,7 +147,7 @@ export default function HomePage() {
             <Link key={post.id} to={`/blog/${post.slug}`} className="group">
               <Card className={`grid h-full grid-rows-[auto_auto_1fr_auto] overflow-hidden border transition-transform duration-300 group-hover:scale-[1.02] ${palette.border} ${palette.card}`}>
                 <div className="aspect-[16/9] w-full overflow-hidden">
-                  <img src={post.image} alt={post.title} className="h-full w-full object-cover grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-105" />
+                  <LazyImage src={post.image} alt={post.title} className="grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-105" />
                 </div>
                 <CardHeader>
                   <div className="mb-2 flex items-center gap-2">
@@ -157,9 +160,7 @@ export default function HomePage() {
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4">
                   <div className="flex w-full items-center gap-3 text-sm">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback>{post.author[0]}</AvatarFallback>
-                    </Avatar>
+                    <Avatar className="h-6 w-6"><AvatarFallback>{post.author[0]}</AvatarFallback></Avatar>
                     <span className="text-xs">{post.author}</span>
                     <span className={`text-xs ${palette.subtle}`}>&bull;</span>
                     <span className={`text-xs ${palette.subtle}`}>{post.readTime} min</span>
@@ -173,49 +174,112 @@ export default function HomePage() {
           ))}
         </div>
         <div className="mt-8 text-center">
-          <Link to="/blog">
-            <Button variant="outline">View All Articles <ArrowRight className="ml-2 h-4 w-4" /></Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
-        <div className={`rounded-3xl border p-8 md:p-12 ${palette.border} ${palette.card}`}>
-          <h2 className="mb-8 text-center text-3xl font-semibold md:text-4xl">Impact by the Numbers</h2>
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              { icon: Users, value: "250,000+", label: "Children Reached" },
-              { icon: TrendingUp, value: "93%", label: "Faster Response Times" },
-              { icon: Heart, value: "4 Countries", label: "Active Deployments" },
-            ].map((stat, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-4 text-center">
-                <stat.icon className="h-12 w-12" />
-                <div className="text-4xl font-bold">{stat.value}</div>
-                <div className={palette.subtle}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
+          <Link to="/blog"><Button variant="outline">View All Articles <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
         </div>
       </section>
 
       {/* How You Can Contribute */}
       <section className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
-        <h2 className="mb-12 text-center text-3xl font-semibold md:text-4xl">How You Can Contribute</h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            { icon: BookOpen, title: "Write a Blog Post", desc: "Share your insights and experiences with the community", to: "/contact" },
-            { icon: Code, title: "Contribute Code", desc: "Help build the platform on GitHub", to: "/contributors" },
-            { icon: Heart, title: "Fund the Mission", desc: "Support child protection initiatives", to: "/contact" },
-          ].map((feature, idx) => (
-            <Link key={idx} to={feature.to}>
-              <div className={`group relative overflow-hidden rounded-2xl border p-6 transition duration-300 hover:scale-[1.02] ${palette.border} ${palette.card}`}>
-                <feature.icon className="mb-4 h-10 w-10" />
-                <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
-                <p className={palette.subtle}>{feature.desc}</p>
+        <h2 className="mb-4 text-3xl font-semibold md:text-4xl">How You Can Contribute</h2>
+        <p className={`mb-12 max-w-3xl text-lg ${palette.subtle}`}>
+          OpenCHS is open source and community-driven. Here are three ways you can make a difference.
+        </p>
+        <div className="space-y-6">
+          {/* 1. Contribute Code */}
+          <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
+            <div className="flex items-start gap-4">
+              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
+                <Code className="h-5 w-5" />
               </div>
-            </Link>
-          ))}
+              <div className="flex-1">
+                <h3 className="mb-3 text-xl font-semibold">1. Contribute Code</h3>
+                <p className={`mb-4 ${palette.subtle}`}>Help build and improve the platform. Follow these steps to submit your first pull request:</p>
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">1</span>
+                    <div>
+                      <div className="font-medium">Fork and clone the repository</div>
+                      <div className="relative mt-1">
+                        <pre className={`overflow-x-auto rounded-lg border p-3 text-sm ${palette.border} ${palette.highlight}`}><code>git clone https://github.com/YOUR_USERNAME/OpenCHS-platform.git{"\n"}cd OpenCHS-platform{"\n"}npm install</code></pre>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">2</span>
+                    <div>
+                      <div className="font-medium">Create a feature branch</div>
+                      <pre className={`mt-1 overflow-x-auto rounded-lg border p-3 text-sm ${palette.border} ${palette.highlight}`}><code>git checkout -b feat/your-feature-name</code></pre>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">3</span>
+                    <div>
+                      <div className="font-medium">Make your changes, commit, and push</div>
+                      <pre className={`mt-1 overflow-x-auto rounded-lg border p-3 text-sm ${palette.border} ${palette.highlight}`}><code>git add .{"\n"}git commit -m "feat: add multilingual support for Swahili"{"\n"}git push origin feat/your-feature-name</code></pre>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">4</span>
+                    <div>
+                      <div className="font-medium">Open a Pull Request</div>
+                      <p className={`mt-1 text-sm ${palette.subtle}`}>
+                        Use a clear title — e.g. <span className="font-medium">"feat: add Swahili language support for AI transcription"</span>. Include a summary of what changed and why, screenshots if relevant, and link related issues.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <GitPullRequest className={`h-4 w-4 ${palette.subtle}`} />
+                  <span className={`text-sm ${palette.subtle}`}>PR naming: <code className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-800">type: short description</code> — types: feat, fix, docs, refactor, test</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Write a Blog Post */}
+          <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
+            <div className="flex items-start gap-4">
+              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
+                <PenLine className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="mb-3 text-xl font-semibold">2. Write a Blog Post</h3>
+                <p className={`mb-4 ${palette.subtle}`}>Share your experience, insights, or case studies with the OpenCHS community.</p>
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">1</span>
+                    <div><div className="font-medium">Choose a topic</div><p className={`mt-1 text-sm ${palette.subtle}`}>Deployment stories, technical deep-dives, AI/ML insights, policy and governance, or impact reports.</p></div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">2</span>
+                    <div><div className="font-medium">Draft your article</div><p className={`mt-1 text-sm ${palette.subtle}`}>Write in Markdown, 800–2000 words. Include code snippets, data, or screenshots where they add value.</p></div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">3</span>
+                    <div><div className="font-medium">Submit for review</div><p className={`mt-1 text-sm ${palette.subtle}`}>Email your draft to <a href="mailto:blog@openchs.org" className="font-medium underline underline-offset-2">blog@openchs.org</a> or open a PR to the <code className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-800">content/blog</code> directory.</p></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Fund the Mission */}
+          <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
+            <div className="flex items-start gap-4">
+              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
+                <Heart className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="mb-3 text-xl font-semibold">3. Fund the Mission</h3>
+                <p className={`mb-4 ${palette.subtle}`}>Your financial support directly enables child protection in underserved regions.</p>
+                <div className="space-y-3">
+                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 flex-shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Sponsor development</div><p className={`mt-1 text-sm ${palette.subtle}`}>Fund specific features like multilingual AI models, offline-first capabilities, or mobile apps.</p></div></div>
+                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 flex-shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Support deployments</div><p className={`mt-1 text-sm ${palette.subtle}`}>Help cover infrastructure, training, and onboarding costs. Each deployment costs ~$15,000–$30,000 to launch.</p></div></div>
+                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 flex-shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Partner with us</div><p className={`mt-1 text-sm ${palette.subtle}`}>We work with NGOs, governments, and private sector partners. <Link to="/contact" className="font-medium underline underline-offset-2">Reach out</Link> to discuss.</p></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -227,14 +291,14 @@ export default function HomePage() {
               <h2 className="mb-4 text-3xl font-semibold md:text-4xl">Get in Touch</h2>
               <p className={`mb-6 ${palette.subtle}`}>Interested in collaborating, funding, or learning more about OpenCHS? Reach out to us.</p>
               <div className="space-y-4">
-                <div className="flex items-center gap-3"><Mail className="h-5 w-5" /><span>contact@openchs.org</span></div>
+                <a href="mailto:contact@openchs.org" className="flex items-center gap-3 hover:underline"><Mail className="h-5 w-5" /><span>contact@openchs.org</span></a>
                 <div className="flex items-center gap-3"><MapPin className="h-5 w-5" /><span>Nairobi, Kenya</span></div>
-                <div className="flex items-center gap-3"><Phone className="h-5 w-5" /><span>+254 700 000 000</span></div>
+                <a href="tel:+254700000000" className="flex items-center gap-3 hover:underline"><Phone className="h-5 w-5" /><span>+254 700 000 000</span></a>
               </div>
             </div>
             <form onSubmit={handleContact} className="space-y-4">
               {contactSubmitted && (
-                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-400">
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-600 dark:text-green-400">
                   Message sent successfully! We'll get back to you soon.
                 </div>
               )}
@@ -248,7 +312,7 @@ export default function HomePage() {
               </div>
               <div>
                 <label htmlFor="c-message" className="mb-2 block text-sm font-medium">Message</label>
-                <textarea id="c-message" rows={4} placeholder="Tell us about your interest..." value={contactForm.message} onChange={(e) => setContactForm((f) => ({ ...f, message: e.target.value }))} className={`w-full rounded-lg border bg-transparent px-3 py-2 text-sm ${palette.border}`} required />
+                <textarea id="c-message" rows={4} placeholder="Tell us about your interest..." value={contactForm.message} onChange={(e) => setContactForm((f) => ({ ...f, message: e.target.value }))} className={`w-full resize-none rounded-lg border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${palette.border}`} required />
               </div>
               <Button type="submit" className="w-full">Send Message <Send className="ml-2 h-4 w-4" /></Button>
             </form>
@@ -265,6 +329,7 @@ export default function HomePage() {
               key={idx}
               onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
               className={`w-full rounded-xl border p-6 text-left transition-all duration-300 ${palette.border} ${palette.card}`}
+              aria-expanded={openFaq === idx}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -286,7 +351,7 @@ export default function HomePage() {
           <h2 className="mb-4 text-3xl font-semibold md:text-4xl">Stay Updated</h2>
           <p className={`mb-8 ${palette.subtle}`}>Subscribe to our newsletter for the latest updates, articles, and impact stories.</p>
           {subscribed && (
-            <div className="mx-auto mb-4 max-w-md rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+            <div className="mx-auto mb-4 max-w-md rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
               Thank you for subscribing!
             </div>
           )}

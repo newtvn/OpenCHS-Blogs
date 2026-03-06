@@ -1,37 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
 
-const getRootTheme = () => {
-  if (typeof document === "undefined") {
-    if (typeof window !== "undefined" && window.matchMedia) {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    return "dark";
-  }
-
+/**
+ * Reads the current theme from the `<html>` element.
+ *
+ * Detection order:
+ *  1. `<html class="dark">` or `data-theme="dark"`
+ *  2. `<html class="light">`
+ *  3. `prefers-color-scheme` media query
+ *  4. Falls back to "dark"
+ *
+ * Note: SSR guards (`typeof document`) are omitted because this is
+ * a client-only Vite SPA — `document` and `window` are always available.
+ */
+const getRootTheme = (): "light" | "dark" => {
   const root = document.documentElement;
-  if (root.classList.contains("dark")) return "dark";
-  if (root.getAttribute("data-theme") === "dark" || root.dataset?.theme === "dark") return "dark";
+  if (root.classList.contains("dark") || root.dataset?.theme === "dark") return "dark";
   if (root.classList.contains("light")) return "light";
 
-  if (typeof window !== "undefined" && window.matchMedia) {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-
-  return "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
+/**
+ * Reactive hook that tracks the current light/dark theme.
+ *
+ * Watches `<html>` class / data-theme mutations via MutationObserver
+ * and listens to `prefers-color-scheme` media query changes so the
+ * UI re-renders automatically when the user's OS theme flips.
+ */
 export const useThemeSync = () => {
-  const [theme, setTheme] = useState(() => getRootTheme());
+  const [theme, setTheme] = useState<"light" | "dark">(getRootTheme);
 
   useEffect(() => {
-    if (typeof document === "undefined") return;
-
     const sync = () => {
       const next = getRootTheme();
       setTheme((prev) => (prev === next ? prev : next));
     };
-
-    sync();
 
     const observer = new MutationObserver(sync);
     observer.observe(document.documentElement, {
@@ -39,27 +42,54 @@ export const useThemeSync = () => {
       attributeFilter: ["class", "data-theme"],
     });
 
-    const media =
-      typeof window !== "undefined" && window.matchMedia
-        ? window.matchMedia("(prefers-color-scheme: dark)")
-        : null;
-
-    const onMedia = () => sync();
-    media?.addEventListener("change", onMedia);
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    media.addEventListener("change", sync);
 
     return () => {
       observer.disconnect();
-      media?.removeEventListener("change", onMedia);
+      media.removeEventListener("change", sync);
     };
   }, []);
 
   return [theme, setTheme] as const;
 };
 
-export const usePalette = () => {
+/** Shape returned by `usePalette` — all values are Tailwind class strings except `background`. */
+export interface Palette {
+  surface: string;
+  subtle: string;
+  border: string;
+  highlight: string;
+  accent: string;
+  card: string;
+  background: {
+    color: string;
+    overlays: string[];
+    dots: string;
+  };
+}
+
+/**
+ * Returns theme-aware Tailwind utility class strings and CSS values.
+ *
+ * Usage:
+ * ```ts
+ * const { theme, palette } = usePalette();
+ * <div className={palette.card}>…</div>
+ * ```
+ *
+ * - `palette.surface`    — base bg + text colour for the page shell
+ * - `palette.subtle`     — muted text colour
+ * - `palette.border`     — border colour class
+ * - `palette.highlight`  — highlighted row / active sidebar item bg
+ * - `palette.accent`     — accent bg for badges & category pills
+ * - `palette.card`       — translucent card background
+ * - `palette.background` — CSS values for the fixed gradient backdrop
+ */
+export const usePalette = (): { theme: "light" | "dark"; palette: Palette } => {
   const [theme] = useThemeSync();
 
-  const palette = useMemo(
+  const palette = useMemo<Palette>(
     () =>
       theme === "dark"
         ? {
@@ -94,7 +124,7 @@ export const usePalette = () => {
               dots: "radial-gradient(circle at 25% 25%, rgba(23,23,23,0.08) 0.65px, transparent 1px), radial-gradient(circle at 75% 75%, rgba(23,23,23,0.08) 0.65px, transparent 1px)",
             },
           },
-    [theme]
+    [theme],
   );
 
   return { theme, palette };

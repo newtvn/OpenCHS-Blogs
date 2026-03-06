@@ -1,55 +1,129 @@
 import { useState } from "react";
-import { MessageSquare, Users, Clock, ThumbsUp, ChevronRight } from "lucide-react";
+import { MessageSquare, Users, ThumbsUp, ChevronUp, ChevronDown, Check, Search, Eye, Plus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { usePalette } from "@/hooks/useTheme";
+import { threads, forumCategories } from "@/data/forumThreads";
+import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
-interface ForumThread {
-  id: number;
-  title: string;
-  author: string;
-  category: string;
-  replies: number;
-  likes: number;
-  lastActivity: string;
-  preview: string;
-}
-
-const threads: ForumThread[] = [
-  { id: 1, title: "Best practices for deploying OpenCHS in low-bandwidth environments", author: "Newtvn", category: "Deployment", replies: 12, likes: 24, lastActivity: "2 hours ago", preview: "We've been working on deploying OpenCHS in rural Kenya where bandwidth is limited. Here are some strategies we've found effective..." },
-  { id: 2, title: "Custom workflow stages for child trafficking cases", author: "Rodgendo", category: "Configuration", replies: 8, likes: 16, lastActivity: "5 hours ago", preview: "Our organization needs specific workflow stages for trafficking cases. Has anyone customized the workflow engine for this use case?" },
-  { id: 3, title: "Integrating OpenCHS with WhatsApp Business API", author: "Newtvn", category: "Integrations", replies: 15, likes: 31, lastActivity: "1 day ago", preview: "We've successfully integrated OpenCHS with WhatsApp Business API for incoming case reports. Here's a guide..." },
-  { id: 4, title: "AI risk scoring accuracy improvements in v2.4", author: "Rodgendo", category: "AI & ML", replies: 6, likes: 19, lastActivity: "2 days ago", preview: "The new risk scoring model in v2.4 has significantly improved accuracy. We ran benchmarks comparing v2.3 vs v2.4..." },
-  { id: 5, title: "Multi-language support: adding Swahili and Amharic", author: "Newtvn", category: "Localization", replies: 22, likes: 45, lastActivity: "3 days ago", preview: "We're working on adding Swahili and Amharic language support to both the UI and AI transcription. Contributors welcome!" },
-  { id: 6, title: "Compliance with GDPR for European deployments", author: "Rodgendo", category: "Legal & Compliance", replies: 9, likes: 14, lastActivity: "1 week ago", preview: "For organizations deploying OpenCHS in the EU, here's a compliance checklist we've developed for GDPR requirements..." },
-];
-
-const forumCategories = ["All", "Deployment", "Configuration", "Integrations", "AI & ML", "Localization", "Legal & Compliance"];
 
 export default function ForumPage() {
   const { palette } = usePalette();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [expandedThread, setExpandedThread] = useState<number | null>(null);
+  const [openThread, setOpenThread] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [votedItems, setVotedItems] = useState<Record<string, number>>({});
+  const [answerText, setAnswerText] = useState("");
+  const [answerPosted, setAnswerPosted] = useState(false);
+  const [showAskForm, setShowAskForm] = useState(false);
+  const [newQuestion, setNewQuestion] = useState({ title: "", body: "", tags: "" });
+  const [questionPosted, setQuestionPosted] = useState(false);
 
-  const filtered = activeCategory === "All" ? threads : threads.filter((t) => t.category === activeCategory);
+  const filtered = threads
+    .filter((t) => activeCategory === "All" || t.category === activeCategory)
+    .filter((t) => !searchQuery || t.title.toLowerCase().includes(searchQuery.toLowerCase()) || t.tags.some((tag) => tag.includes(searchQuery.toLowerCase())));
+
+  const handleVote = (key: string, direction: number) => {
+    setVotedItems((prev) => {
+      const current = prev[key] || 0;
+      if (current === direction) return { ...prev, [key]: 0 };
+      return { ...prev, [key]: direction };
+    });
+  };
+
+  const getVoteOffset = (key: string) => votedItems[key] || 0;
+
+  const handlePostAnswer = () => {
+    if (!answerText.trim()) return;
+    setAnswerPosted(true);
+    setAnswerText("");
+    setTimeout(() => setAnswerPosted(false), 4000);
+  };
+
+  const handleAskQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newQuestion.title.trim() || !newQuestion.body.trim()) return;
+    setQuestionPosted(true);
+    setNewQuestion({ title: "", body: "", tags: "" });
+    setTimeout(() => {
+      setQuestionPosted(false);
+      setShowAskForm(false);
+    }, 3000);
+  };
+
+  const activeThread = threads.find((t) => t.id === openThread);
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-16 lg:px-12">
-      <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Community Forum</h1>
-      <p className={`mb-8 text-lg ${palette.subtle}`}>
-        Discuss, ask questions, and share knowledge with the OpenCHS community.
-      </p>
+    <div className="mx-auto w-full max-w-5xl px-6 py-16 lg:px-12">
+      <SEO title="Forum" description="Discuss, ask questions, and share knowledge with the OpenCHS community." />
+      <Breadcrumbs items={[{ label: "Forum" }]} />
+
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="mb-2 text-4xl font-semibold md:text-5xl">Community Forum</h1>
+          <p className={`text-lg ${palette.subtle}`}>
+            Discuss, ask questions, and share knowledge with the OpenCHS community.
+          </p>
+        </div>
+        {!openThread && (
+          <Button onClick={() => setShowAskForm(true)} className="w-fit">
+            <Plus className="mr-2 h-4 w-4" /> Ask a Question
+          </Button>
+        )}
+      </div>
+
+      {/* Ask question form */}
+      {showAskForm && !openThread && (
+        <div className={`mb-8 rounded-xl border p-6 ${palette.border} ${palette.card}`}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Ask a Question</h2>
+            <button onClick={() => setShowAskForm(false)} className={`text-sm hover:underline ${palette.subtle}`}>Cancel</button>
+          </div>
+          {questionPosted ? (
+            <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-center text-green-600 dark:text-green-400">
+              Your question has been posted! The community will respond shortly.
+            </div>
+          ) : (
+            <form onSubmit={handleAskQuestion} className="space-y-4">
+              <div>
+                <label htmlFor="q-title" className="mb-1 block text-sm font-medium">Title *</label>
+                <Input id="q-title" placeholder="What's your question?" value={newQuestion.title} onChange={(e) => setNewQuestion((q) => ({ ...q, title: e.target.value }))} className={palette.border} required />
+              </div>
+              <div>
+                <label htmlFor="q-body" className="mb-1 block text-sm font-medium">Details *</label>
+                <textarea
+                  id="q-body"
+                  rows={5}
+                  placeholder="Provide more context and details..."
+                  value={newQuestion.body}
+                  onChange={(e) => setNewQuestion((q) => ({ ...q, body: e.target.value }))}
+                  className={`w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 dark:focus:border-neutral-400 dark:focus:ring-neutral-400 ${palette.border}`}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="q-tags" className="mb-1 block text-sm font-medium">Tags</label>
+                <Input id="q-tags" placeholder="e.g. deployment, ai, configuration" value={newQuestion.tags} onChange={(e) => setNewQuestion((q) => ({ ...q, tags: e.target.value }))} className={palette.border} />
+              </div>
+              <Button type="submit">Post Your Question</Button>
+            </form>
+          )}
+        </div>
+      )}
 
       {/* Categories */}
-      <div className="mb-8 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         {forumCategories.map((cat) => (
           <Button
             key={cat}
             variant="outline"
             size="sm"
             className={`${activeCategory === cat ? "ring-2 ring-neutral-400" : ""} ${palette.accent}`}
-            onClick={() => setActiveCategory(cat)}
+            onClick={() => { setActiveCategory(cat); setOpenThread(null); }}
+            aria-pressed={activeCategory === cat}
           >
             {cat}
           </Button>
@@ -57,64 +131,207 @@ export default function ForumPage() {
       </div>
 
       {/* Search */}
-      <div className="mb-8">
-        <Input placeholder="Search discussions..." className={palette.border} />
+      <div className="relative mb-8">
+        <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${palette.subtle}`} />
+        <Input
+          placeholder="Search discussions..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={`pl-10 ${palette.border}`}
+          aria-label="Search discussions"
+        />
       </div>
 
-      {/* Threads */}
-      <div className="space-y-3">
-        {filtered.map((thread) => (
-          <button
-            key={thread.id}
-            onClick={() => setExpandedThread(expandedThread === thread.id ? null : thread.id)}
-            className={`w-full rounded-xl border p-6 text-left transition-all ${palette.border} ${palette.card}`}
-          >
-            <div className="flex items-start gap-4">
-              <Avatar className="mt-1 h-10 w-10 flex-shrink-0">
-                <AvatarFallback>{thread.author[0]}</AvatarFallback>
-              </Avatar>
+      {/* Thread detail view */}
+      {activeThread ? (
+        <div>
+          <button onClick={() => setOpenThread(null)} className={`mb-6 text-sm hover:underline ${palette.subtle}`}>
+            &larr; Back to all questions
+          </button>
+
+          {/* Question */}
+          <div className={`rounded-xl border p-6 ${palette.border} ${palette.card}`}>
+            <div className="flex gap-4">
+              {/* Vote column */}
+              <div className="flex flex-col items-center gap-1 pt-1">
+                <button onClick={() => handleVote(`q-${activeThread.id}`, 1)} aria-label="Upvote" className={`rounded p-1 transition hover:bg-neutral-200 dark:hover:bg-neutral-800 ${getVoteOffset(`q-${activeThread.id}`) === 1 ? "text-green-500" : palette.subtle}`}>
+                  <ChevronUp className="h-6 w-6" />
+                </button>
+                <span className="text-lg font-bold">{activeThread.votes + getVoteOffset(`q-${activeThread.id}`)}</span>
+                <button onClick={() => handleVote(`q-${activeThread.id}`, -1)} aria-label="Downvote" className={`rounded p-1 transition hover:bg-neutral-200 dark:hover:bg-neutral-800 ${getVoteOffset(`q-${activeThread.id}`) === -1 ? "text-red-500" : palette.subtle}`}>
+                  <ChevronDown className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Content */}
               <div className="min-w-0 flex-1">
-                <div className="mb-1 flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full border px-2 py-0.5 text-xs ${palette.border} ${palette.accent}`}>{thread.category}</span>
-                  <span className={`text-xs ${palette.subtle}`}>by {thread.author}</span>
+                <h2 className="mb-3 text-2xl font-bold">{activeThread.title}</h2>
+                <div className={`mb-4 flex flex-wrap items-center gap-3 text-xs ${palette.subtle}`}>
+                  <span>Asked {activeThread.postedAt}</span>
+                  <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {activeThread.views.toLocaleString()} views</span>
                 </div>
-                <h3 className="mb-1 text-base font-semibold">{thread.title}</h3>
-                <div className={`flex flex-wrap items-center gap-4 text-xs ${palette.subtle}`}>
-                  <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {thread.replies} replies</span>
-                  <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> {thread.likes} likes</span>
-                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {thread.lastActivity}</span>
+                <p className="mb-4 leading-relaxed">{activeThread.content}</p>
+                <div className="mb-4 flex flex-wrap gap-1.5">
+                  {activeThread.tags.map((tag) => (
+                    <span key={tag} className={`rounded-md border px-2 py-0.5 text-xs ${palette.border} ${palette.accent}`}>{tag}</span>
+                  ))}
                 </div>
-                <div className={`overflow-hidden transition-all duration-300 ${expandedThread === thread.id ? "mt-4 max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-                  <p className={`text-sm ${palette.subtle}`}>{thread.preview}</p>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">{activeThread.author[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{activeThread.author}</span>
+                  <Badge variant="outline" className="text-xs">{activeThread.category}</Badge>
                 </div>
               </div>
-              <ChevronRight className={`mt-2 h-5 w-5 flex-shrink-0 transition-transform ${expandedThread === thread.id ? "rotate-90" : ""}`} />
             </div>
-          </button>
-        ))}
-      </div>
+          </div>
 
-      {/* Stats */}
-      <div className={`mt-12 rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
-        <h2 className="mb-6 text-center text-xl font-semibold">Community Stats</h2>
-        <div className="grid gap-6 sm:grid-cols-3">
-          <div className="text-center">
-            <Users className="mx-auto mb-2 h-8 w-8" />
-            <div className="text-2xl font-bold">1,247</div>
-            <div className={`text-sm ${palette.subtle}`}>Members</div>
+          {/* Answers header */}
+          <div className={`mb-4 mt-8 flex items-center justify-between border-b pb-3 ${palette.border}`}>
+            <h3 className="text-lg font-semibold">{activeThread.answers.length} Answer{activeThread.answers.length !== 1 ? "s" : ""}</h3>
+            <span className={`text-sm ${palette.subtle}`}>Sorted by votes</span>
           </div>
-          <div className="text-center">
-            <MessageSquare className="mx-auto mb-2 h-8 w-8" />
-            <div className="text-2xl font-bold">3,891</div>
-            <div className={`text-sm ${palette.subtle}`}>Discussions</div>
+
+          {/* Answers */}
+          <div className="space-y-4">
+            {[...activeThread.answers].sort((a, b) => b.votes - a.votes).map((answer) => (
+              <div key={answer.id} className={`rounded-xl border p-6 ${answer.accepted ? "border-green-500/30 bg-green-500/5" : `${palette.border} ${palette.card}`}`}>
+                <div className="flex gap-4">
+                  {/* Vote column */}
+                  <div className="flex flex-col items-center gap-1 pt-1">
+                    <button onClick={() => handleVote(`a-${answer.id}`, 1)} aria-label="Upvote answer" className={`rounded p-1 transition hover:bg-neutral-200 dark:hover:bg-neutral-800 ${getVoteOffset(`a-${answer.id}`) === 1 ? "text-green-500" : palette.subtle}`}>
+                      <ChevronUp className="h-5 w-5" />
+                    </button>
+                    <span className="font-bold">{answer.votes + getVoteOffset(`a-${answer.id}`)}</span>
+                    <button onClick={() => handleVote(`a-${answer.id}`, -1)} aria-label="Downvote answer" className={`rounded p-1 transition hover:bg-neutral-200 dark:hover:bg-neutral-800 ${getVoteOffset(`a-${answer.id}`) === -1 ? "text-red-500" : palette.subtle}`}>
+                      <ChevronDown className="h-5 w-5" />
+                    </button>
+                    {answer.accepted && (
+                      <div className="mt-1 rounded-full bg-green-500/20 p-1" title="Accepted answer">
+                        <Check className="h-4 w-4 text-green-500" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="whitespace-pre-wrap leading-relaxed">{answer.content}</div>
+                    <div className={`mt-4 flex items-center justify-between border-t pt-3 ${palette.border}`}>
+                      <span className={`text-xs ${palette.subtle}`}>{answer.postedAt}</span>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback className="text-xs">{answer.author[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{answer.author}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="text-center">
-            <ThumbsUp className="mx-auto mb-2 h-8 w-8" />
-            <div className="text-2xl font-bold">12,456</div>
-            <div className={`text-sm ${palette.subtle}`}>Helpful Answers</div>
+
+          {/* Post answer box */}
+          <div className={`mt-8 rounded-xl border p-6 ${palette.border} ${palette.card}`}>
+            <h3 className="mb-4 text-lg font-semibold">Your Answer</h3>
+            {answerPosted && (
+              <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-600 dark:text-green-400">
+                Your answer has been posted!
+              </div>
+            )}
+            <textarea
+              rows={5}
+              placeholder="Write your answer here..."
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              className={`mb-4 w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 dark:focus:border-neutral-400 dark:focus:ring-neutral-400 ${palette.border}`}
+            />
+            <Button onClick={handlePostAnswer}>Post Your Answer</Button>
           </div>
         </div>
-      </div>
+      ) : (
+        /* Thread list view */
+        <>
+          <div className="space-y-2">
+            {filtered.map((thread) => {
+              const hasAccepted = thread.answers.some((a) => a.accepted);
+              return (
+                <button
+                  key={thread.id}
+                  onClick={() => setOpenThread(thread.id)}
+                  className={`w-full rounded-xl border p-5 text-left transition-all hover:scale-[1.005] ${palette.border} ${palette.card}`}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Stats column */}
+                    <div className="hidden flex-shrink-0 sm:flex sm:gap-3">
+                      <div className="flex min-w-[56px] flex-col items-center rounded-lg border px-2 py-1.5 text-center">
+                        <span className="text-base font-bold">{thread.votes}</span>
+                        <span className={`text-xs ${palette.subtle}`}>votes</span>
+                      </div>
+                      <div className={`flex min-w-[56px] flex-col items-center rounded-lg border px-2 py-1.5 text-center ${hasAccepted ? "border-green-500/40 bg-green-500/10 text-green-500" : ""}`}>
+                        <span className="text-base font-bold">{thread.answers.length}</span>
+                        <span className={`text-xs ${hasAccepted ? "text-green-500" : palette.subtle}`}>{hasAccepted ? "✓ ans" : "ans"}</span>
+                      </div>
+                      <div className="flex min-w-[56px] flex-col items-center rounded-lg px-2 py-1.5 text-center">
+                        <span className={`text-base font-bold ${palette.subtle}`}>{thread.views >= 1000 ? `${(thread.views / 1000).toFixed(1)}k` : thread.views}</span>
+                        <span className={`text-xs ${palette.subtle}`}>views</span>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="mb-1.5 text-base font-semibold text-blue-600 dark:text-blue-400">{thread.title}</h3>
+                      <p className={`mb-2 line-clamp-2 text-sm ${palette.subtle}`}>{thread.content}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {thread.tags.map((tag) => (
+                          <span key={tag} className={`rounded-md border px-1.5 py-0.5 text-xs ${palette.border} ${palette.accent}`}>{tag}</span>
+                        ))}
+                        <span className={`ml-auto text-xs ${palette.subtle}`}>
+                          <span className="font-medium">{thread.author}</span> &middot; {thread.postedAt}
+                        </span>
+                      </div>
+
+                      {/* Mobile stats */}
+                      <div className={`mt-2 flex gap-4 text-xs sm:hidden ${palette.subtle}`}>
+                        <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> {thread.votes}</span>
+                        <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {thread.answers.length}</span>
+                        <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {thread.views}</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {filtered.length === 0 && (
+            <p className={`py-12 text-center text-lg ${palette.subtle}`}>No discussions found.</p>
+          )}
+
+          {/* Stats */}
+          <div className={`mt-12 rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
+            <h2 className="mb-6 text-center text-xl font-semibold">Community Stats</h2>
+            <div className="grid gap-6 sm:grid-cols-3">
+              <div className="text-center">
+                <Users className="mx-auto mb-2 h-8 w-8" />
+                <div className="text-2xl font-bold">1,247</div>
+                <div className={`text-sm ${palette.subtle}`}>Members</div>
+              </div>
+              <div className="text-center">
+                <MessageSquare className="mx-auto mb-2 h-8 w-8" />
+                <div className="text-2xl font-bold">3,891</div>
+                <div className={`text-sm ${palette.subtle}`}>Discussions</div>
+              </div>
+              <div className="text-center">
+                <ThumbsUp className="mx-auto mb-2 h-8 w-8" />
+                <div className="text-2xl font-bold">12,456</div>
+                <div className={`text-sm ${palette.subtle}`}>Helpful Answers</div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
