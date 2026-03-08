@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -7,25 +7,50 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { usePalette } from "@/hooks/useTheme";
-import { blogPosts, categories } from "@/data/blogPosts";
+import { categories } from "@/data/blogPosts";
+import type { BlogListResponse } from "@/data/blogPosts";
+import { useApi } from "@/hooks/useApi";
 import SEO from "@/components/SEO";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import LazyImage from "@/components/LazyImage";
+
+function BlogCardSkeleton({ palette }: { palette: { border: string; card: string } }) {
+  return (
+    <div className={`animate-pulse overflow-hidden rounded-2xl border ${palette.border} ${palette.card}`}>
+      <div className="aspect-video w-full bg-neutral-200 dark:bg-neutral-800" />
+      <div className="p-5 space-y-3">
+        <div className="h-3 w-20 rounded bg-neutral-200 dark:bg-neutral-800" />
+        <div className="h-5 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
+        <div className="h-4 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
+        <div className="h-4 w-5/6 rounded bg-neutral-200 dark:bg-neutral-800" />
+      </div>
+    </div>
+  );
+}
 
 export default function BlogListPage() {
   const { palette } = usePalette();
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const filtered = blogPosts
-    .filter((p) => activeCategory === "All" || p.category === activeCategory)
-    .filter(
-      (p) =>
-        !searchQuery ||
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.author.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  // Debounce the search input so we don't fire a request on every keystroke.
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [searchQuery]);
+
+  const params = new URLSearchParams({ page: "1", limit: "12" });
+  if (activeCategory !== "All") params.set("category", activeCategory);
+  if (debouncedSearch) params.set("q", debouncedSearch);
+
+  const { data, loading, error } = useApi<BlogListResponse>(`/blog/posts?${params.toString()}`);
+
+  const posts = data?.data ?? [];
 
   return (
     <section className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
@@ -66,43 +91,63 @@ export default function BlogListPage() {
         ))}
       </div>
 
-      {filtered.length === 0 && (
+      {/* Error state */}
+      {error && !loading && (
+        <p className={`py-12 text-center text-lg ${palette.subtle}`}>
+          Could not load articles. Please try again later.
+        </p>
+      )}
+
+      {/* Loading skeleton — 3 grey cards */}
+      {loading && (
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <BlogCardSkeleton key={i} palette={palette} />
+          ))}
+        </div>
+      )}
+
+      {/* Empty state (after load, no error) */}
+      {!loading && !error && posts.length === 0 && (
         <p className={`py-12 text-center text-lg ${palette.subtle}`}>No articles found.</p>
       )}
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((post) => (
-          <Link key={post.id} to={`/blog/${post.slug}`} className="group">
-            <Card className={`grid h-full grid-rows-[auto_auto_1fr_auto] overflow-hidden border transition-transform duration-300 group-hover:scale-[1.02] ${palette.border} ${palette.card}`}>
-              <LazyImage src={post.image} alt={post.title} className="aspect-[16/9] w-full grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-105" />
-              <CardHeader>
-                <div className="mb-2 flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">{post.category}</Badge>
-                </div>
-                <h3 className="text-xl font-semibold group-hover:underline">{post.title}</h3>
-              </CardHeader>
-              <CardContent>
-                <p className={palette.subtle}>{post.summary}</p>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-4">
-                <div className="flex w-full items-center gap-3 text-sm">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback>{post.author[0]}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs">{post.author}</span>
-                  <span className={`text-xs ${palette.subtle}`}>&bull;</span>
-                  <span className={`text-xs ${palette.subtle}`}>{post.published}</span>
-                  <span className={`text-xs ${palette.subtle}`}>&bull;</span>
-                  <span className={`text-xs ${palette.subtle}`}>{post.readTime} min</span>
-                </div>
-                <span className="flex w-full items-center justify-start p-0 text-sm hover:underline">
-                  Read more <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-              </CardFooter>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {/* Posts grid */}
+      {!loading && !error && posts.length > 0 && (
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <Link key={post.id} to={`/blog/${post.slug}`} className="group">
+              <Card className={`grid h-full grid-rows-[auto_auto_1fr_auto] overflow-hidden border transition-transform duration-300 group-hover:scale-[1.02] ${palette.border} ${palette.card}`}>
+                <LazyImage src={post.image} alt={post.title} className="aspect-video w-full grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-105" />
+                <CardHeader>
+                  <div className="mb-2 flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">{post.category}</Badge>
+                  </div>
+                  <h3 className="text-xl font-semibold group-hover:underline">{post.title}</h3>
+                </CardHeader>
+                <CardContent>
+                  <p className={palette.subtle}>{post.summary}</p>
+                </CardContent>
+                <CardFooter className="flex flex-col gap-4">
+                  <div className="flex w-full items-center gap-3 text-sm">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback>{post.author[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs">{post.author}</span>
+                    <span className={`text-xs ${palette.subtle}`}>&bull;</span>
+                    <span className={`text-xs ${palette.subtle}`}>{post.published}</span>
+                    <span className={`text-xs ${palette.subtle}`}>&bull;</span>
+                    <span className={`text-xs ${palette.subtle}`}>{post.readTime} min</span>
+                  </div>
+                  <span className="flex w-full items-center justify-start p-0 text-sm hover:underline">
+                    Read more <ArrowRight className="ml-2 h-4 w-4" />
+                  </span>
+                </CardFooter>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

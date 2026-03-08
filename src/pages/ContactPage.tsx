@@ -3,6 +3,7 @@ import { Mail, MapPin, Phone, Send, MessageSquare, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePalette } from "@/hooks/useTheme";
+import { api } from "@/lib/api";
 import SEO from "@/components/SEO";
 import Breadcrumbs from "@/components/Breadcrumbs";
 
@@ -10,13 +11,29 @@ export default function ContactPage() {
   const { palette } = usePalette();
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) return;
-    setSubmitted(true);
-    setForm({ name: "", email: "", subject: "", message: "" });
-    setTimeout(() => setSubmitted(false), 5000);
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.post("/contact", {
+        name: form.name,
+        email: form.email,
+        subject: form.subject || undefined,
+        message: form.message,
+      });
+      setSubmitted(true);
+      setForm({ name: "", email: "", subject: "", message: "" });
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not send message. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -36,28 +53,28 @@ export default function ContactPage() {
             <h2 className="mb-6 text-2xl font-semibold">Reach Out</h2>
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <Mail className="mt-1 h-5 w-5 flex-shrink-0" />
+                <Mail className="mt-1 h-5 w-5 shrink-0" />
                 <div>
                   <div className="font-medium">Email</div>
                   <a href="mailto:contact@openchs.org" className={`hover:underline ${palette.subtle}`}>contact@openchs.org</a>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <MapPin className="mt-1 h-5 w-5 flex-shrink-0" />
+                <MapPin className="mt-1 h-5 w-5 shrink-0" />
                 <div>
                   <div className="font-medium">Location</div>
                   <div className={palette.subtle}>Nairobi, Kenya</div>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <Phone className="mt-1 h-5 w-5 flex-shrink-0" />
+                <Phone className="mt-1 h-5 w-5 shrink-0" />
                 <div>
                   <div className="font-medium">Phone</div>
                   <a href="tel:+254700000000" className={`hover:underline ${palette.subtle}`}>+254 700 000 000</a>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <Clock className="mt-1 h-5 w-5 flex-shrink-0" />
+                <Clock className="mt-1 h-5 w-5 shrink-0" />
                 <div>
                   <div className="font-medium">Response Time</div>
                   <div className={palette.subtle}>Usually within 24 hours</div>
@@ -77,7 +94,7 @@ export default function ContactPage() {
                 "Media inquiries and press",
               ].map((text, idx) => (
                 <div key={idx} className="flex items-center gap-3">
-                  <MessageSquare className={`h-4 w-4 flex-shrink-0 ${palette.subtle}`} />
+                  <MessageSquare className={`h-4 w-4 shrink-0 ${palette.subtle}`} />
                   <span className={`text-sm ${palette.subtle}`}>{text}</span>
                 </div>
               ))}
@@ -91,6 +108,11 @@ export default function ContactPage() {
           {submitted && (
             <div className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-center text-green-600 dark:text-green-400">
               Message sent successfully! We'll get back to you within 24 hours.
+            </div>
+          )}
+          {error && (
+            <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-center text-red-600 dark:text-red-400">
+              {error}
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -118,7 +140,9 @@ export default function ContactPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">Send Message <Send className="ml-2 h-4 w-4" /></Button>
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? "Sending…" : "Send Message"} <Send className="ml-2 h-4 w-4" />
+            </Button>
           </form>
         </div>
       </div>

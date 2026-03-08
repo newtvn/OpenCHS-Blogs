@@ -1,89 +1,41 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+
+/* ------------------------------------------------------------------ */
+/*  Theme detection                                                    */
+/* ------------------------------------------------------------------ */
+
+const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+/** Subscribe to OS theme changes — used by useSyncExternalStore. */
+function subscribe(callback: () => void) {
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+/** Read current OS preference — "dark" or "light". */
+function getSnapshot(): "light" | "dark" {
+  return mediaQuery.matches ? "dark" : "light";
+}
 
 /**
- * Reads the current theme from the `<html>` element.
- *
- * Detection order:
- *  1. `<html class="dark">` or `data-theme="dark"`
- *  2. `<html class="light">`
- *  3. `prefers-color-scheme` media query
- *  4. Falls back to "dark"
- *
- * Note: SSR guards (`typeof document`) are omitted because this is
- * a client-only Vite SPA — `document` and `window` are always available.
- */
-const getRootTheme = (): "light" | "dark" => {
-  const root = document.documentElement;
-  if (root.classList.contains("dark") || root.dataset?.theme === "dark") return "dark";
-  if (root.classList.contains("light")) return "light";
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-};
-
-/**
- * Applies the "dark" class to `<html>` so that:
- *  - CSS variables in `.dark { … }` activate (for shadcn/ui components)
- *  - Tailwind's `dark:` modifier works
- */
-const applyThemeClass = (theme: "light" | "dark") => {
-  const root = document.documentElement;
-  if (theme === "dark") {
-    root.classList.add("dark");
-  } else {
-    root.classList.remove("dark");
-  }
-};
-
-/**
- * Reactive hook that tracks the current light/dark theme.
- *
- * On mount and on every OS theme change it:
- *  1. Reads the effective theme (via class, data-attr, or media query)
- *  2. Applies the `dark` class to `<html>` so CSS variables + Tailwind `dark:` stay in sync
- *  3. Re-renders consumers with the new value
+ * Reactive hook that tracks the OS light/dark preference.
+ * Uses `useSyncExternalStore` for tear-free reads — no MutationObserver,
+ * no DOM side-effects during render.
  */
 export const useThemeSync = () => {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const initial = getRootTheme();
-    applyThemeClass(initial);
-    return initial;
-  });
+  const theme = useSyncExternalStore(subscribe, getSnapshot);
 
+  // Apply .dark class to <html> so CSS variables + Tailwind dark: modifiers activate
   useEffect(() => {
-    // Temporarily disconnect observer while we mutate classList to avoid infinite loop
-    let suppressObserver = false;
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
-    const sync = () => {
-      if (suppressObserver) return;
-      const next = getRootTheme();
-      suppressObserver = true;
-      applyThemeClass(next);
-      suppressObserver = false;
-      setTheme((prev) => (prev === next ? prev : next));
-    };
-
-    // Initial sync — applies .dark class on first render
-    sync();
-
-    const observer = new MutationObserver(() => {
-      if (!suppressObserver) sync();
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme"],
-    });
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    media.addEventListener("change", sync);
-
-    return () => {
-      observer.disconnect();
-      media.removeEventListener("change", sync);
-    };
-  }, []);
-
-  return [theme, setTheme] as const;
+  return [theme] as const;
 };
+
+/* ------------------------------------------------------------------ */
+/*  Palette                                                            */
+/* ------------------------------------------------------------------ */
 
 /** Shape returned by `usePalette` — all values are Tailwind class strings except `background`. */
 export interface Palette {
@@ -108,14 +60,6 @@ export interface Palette {
  * const { theme, palette } = usePalette();
  * <div className={palette.card}>…</div>
  * ```
- *
- * - `palette.surface`    — base bg + text colour for the page shell
- * - `palette.subtle`     — muted text colour
- * - `palette.border`     — border colour class
- * - `palette.highlight`  — highlighted row / active sidebar item bg
- * - `palette.accent`     — accent bg for badges & category pills
- * - `palette.card`       — translucent card background
- * - `palette.background` — CSS values for the fixed gradient backdrop
  */
 export const usePalette = (): { theme: "light" | "dark"; palette: Palette } => {
   const [theme] = useThemeSync();

@@ -7,7 +7,9 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { usePalette } from "@/hooks/useTheme";
-import { blogPosts, getPostsByCategory } from "@/data/blogPosts";
+import type { BlogListResponse } from "@/data/blogPosts";
+import { useApi } from "@/hooks/useApi";
+import { api } from "@/lib/api";
 import LazyImage from "@/components/LazyImage";
 import SEO from "@/components/SEO";
 
@@ -29,7 +31,11 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
   const [subscribed, setSubscribed] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,22 +49,51 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
-  const filteredPosts = getPostsByCategory(activeCategory);
+  // Build query params for the blog grid
+  const params = new URLSearchParams({ page: "1", limit: "7" });
+  if (activeCategory !== "All") params.set("category", activeCategory);
+  const { data: blogData, loading: blogLoading } = useApi<BlogListResponse>(`/blog/posts?${params.toString()}`);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const allPosts = blogData?.data ?? [];
+  const featuredPost = allPosts[0] ?? null;
+  const gridPosts = activeCategory === "All" ? allPosts.slice(1) : allPosts;
+
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    setSubscribed(true);
-    setEmail("");
-    setTimeout(() => setSubscribed(false), 3000);
+    setSubscribing(true);
+    setSubscribeError(null);
+    try {
+      await api.post("/newsletter/subscribe", { email });
+      setSubscribed(true);
+      setEmail("");
+      setTimeout(() => setSubscribed(false), 3000);
+    } catch (err: unknown) {
+      setSubscribeError(err instanceof Error ? err.message : "Subscription failed. Please try again.");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
-  const handleContact = (e: React.FormEvent) => {
+  const handleContact = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.email || !contactForm.message) return;
-    setContactSubmitted(true);
-    setContactForm({ name: "", email: "", message: "" });
-    setTimeout(() => setContactSubmitted(false), 4000);
+    setContactSubmitting(true);
+    setContactError(null);
+    try {
+      await api.post("/contact", {
+        name: contactForm.name,
+        email: contactForm.email,
+        message: contactForm.message,
+      });
+      setContactSubmitted(true);
+      setContactForm({ name: "", email: "", message: "" });
+      setTimeout(() => setContactSubmitted(false), 4000);
+    } catch (err: unknown) {
+      setContactError(err instanceof Error ? err.message : "Could not send message. Please try again.");
+    } finally {
+      setContactSubmitting(false);
+    }
   };
 
   const faqs = [
@@ -95,32 +130,48 @@ export default function HomePage() {
         </header>
 
         {/* Featured Post */}
-        <Link to={`/blog/${blogPosts[0].slug}`} className="group">
-          <div className={`relative overflow-hidden rounded-3xl border backdrop-blur-xl ${palette.border} ${palette.card}`}>
+        {blogLoading && (
+          <div className={`animate-pulse overflow-hidden rounded-3xl border ${palette.border} ${palette.card}`}>
             <div className="grid gap-8 lg:grid-cols-2">
-              <div className="relative aspect-[16/10] lg:aspect-auto">
-                <LazyImage src={blogPosts[0].image} alt={blogPosts[0].title} className="h-full w-full grayscale transition-all duration-500 group-hover:grayscale-0" />
-              </div>
-              <div className="flex flex-col justify-center gap-6 p-8 lg:p-12">
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className={palette.accent}>Featured</Badge>
-                  <Badge variant="outline">{blogPosts[0].category}</Badge>
-                </div>
-                <h2 className="text-3xl font-semibold leading-tight group-hover:underline md:text-4xl">{blogPosts[0].title}</h2>
-                <p className={`text-base ${palette.subtle}`}>{blogPosts[0].summary}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <Avatar className="h-8 w-8"><AvatarFallback>{blogPosts[0].author[0]}</AvatarFallback></Avatar>
-                  <span>{blogPosts[0].author}</span>
-                  <span className={palette.subtle}>&bull;</span>
-                  <span className={palette.subtle}>{blogPosts[0].published}</span>
-                  <span className={palette.subtle}>&bull;</span>
-                  <span className={palette.subtle}>{blogPosts[0].readTime} min read</span>
-                </div>
-                <Button variant="outline" className="w-fit">Read Article <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <div className="aspect-video bg-neutral-200 dark:bg-neutral-800 lg:aspect-auto lg:min-h-80" />
+              <div className="flex flex-col justify-center gap-4 p-8 lg:p-12">
+                <div className="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-800" />
+                <div className="h-8 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
+                <div className="h-4 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
+                <div className="h-4 w-5/6 rounded bg-neutral-200 dark:bg-neutral-800" />
               </div>
             </div>
           </div>
-        </Link>
+        )}
+
+        {!blogLoading && featuredPost && (
+          <Link to={`/blog/${featuredPost.slug}`} className="group">
+            <div className={`relative overflow-hidden rounded-3xl border backdrop-blur-xl ${palette.border} ${palette.card}`}>
+              <div className="grid gap-8 lg:grid-cols-2">
+                <div className="relative aspect-video lg:aspect-auto">
+                  <LazyImage src={featuredPost.image} alt={featuredPost.title} className="h-full w-full grayscale transition-all duration-500 group-hover:grayscale-0" />
+                </div>
+                <div className="flex flex-col justify-center gap-6 p-8 lg:p-12">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary" className={palette.accent}>Featured</Badge>
+                    <Badge variant="outline">{featuredPost.category}</Badge>
+                  </div>
+                  <h2 className="text-3xl font-semibold leading-tight group-hover:underline md:text-4xl">{featuredPost.title}</h2>
+                  <p className={`text-base ${palette.subtle}`}>{featuredPost.summary}</p>
+                  <div className="flex items-center gap-4 text-sm">
+                    <Avatar className="h-8 w-8"><AvatarFallback>{featuredPost.author[0]}</AvatarFallback></Avatar>
+                    <span>{featuredPost.author}</span>
+                    <span className={palette.subtle}>&bull;</span>
+                    <span className={palette.subtle}>{featuredPost.published}</span>
+                    <span className={palette.subtle}>&bull;</span>
+                    <span className={palette.subtle}>{featuredPost.readTime} min read</span>
+                  </div>
+                  <Button variant="outline" className="w-fit">Read Article <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                </div>
+              </div>
+            </div>
+          </Link>
+        )}
       </section>
 
       {/* Blog Grid */}
@@ -142,37 +193,59 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {(activeCategory === "All" ? blogPosts.slice(1) : filteredPosts).map((post) => (
-            <Link key={post.id} to={`/blog/${post.slug}`} className="group">
-              <Card className={`grid h-full grid-rows-[auto_auto_1fr_auto] overflow-hidden border transition-transform duration-300 group-hover:scale-[1.02] ${palette.border} ${palette.card}`}>
-                <div className="aspect-[16/9] w-full overflow-hidden">
-                  <LazyImage src={post.image} alt={post.title} className="grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-105" />
+        {blogLoading && (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={`animate-pulse overflow-hidden rounded-2xl border ${palette.border} ${palette.card}`}>
+                <div className="aspect-video w-full bg-neutral-200 dark:bg-neutral-800" />
+                <div className="space-y-3 p-5">
+                  <div className="h-3 w-20 rounded bg-neutral-200 dark:bg-neutral-800" />
+                  <div className="h-5 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
+                  <div className="h-4 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
                 </div>
-                <CardHeader>
-                  <div className="mb-2 flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">{post.category}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!blogLoading && gridPosts.length === 0 && (
+          <p className={`py-12 text-center text-lg ${palette.subtle}`}>No articles found.</p>
+        )}
+
+        {!blogLoading && gridPosts.length > 0 && (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {gridPosts.map((post) => (
+              <Link key={post.id} to={`/blog/${post.slug}`} className="group">
+                <Card className={`grid h-full grid-rows-[auto_auto_1fr_auto] overflow-hidden border transition-transform duration-300 group-hover:scale-[1.02] ${palette.border} ${palette.card}`}>
+                  <div className="aspect-video w-full overflow-hidden">
+                    <LazyImage src={post.image} alt={post.title} className="grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-105" />
                   </div>
-                  <h3 className="text-xl font-semibold group-hover:underline">{post.title}</h3>
-                </CardHeader>
-                <CardContent>
-                  <p className={palette.subtle}>{post.summary}</p>
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                  <div className="flex w-full items-center gap-3 text-sm">
-                    <Avatar className="h-6 w-6"><AvatarFallback>{post.author[0]}</AvatarFallback></Avatar>
-                    <span className="text-xs">{post.author}</span>
-                    <span className={`text-xs ${palette.subtle}`}>&bull;</span>
-                    <span className={`text-xs ${palette.subtle}`}>{post.readTime} min</span>
-                  </div>
-                  <span className="flex w-full items-center justify-start p-0 text-sm hover:underline">
-                    Read more <ArrowRight className="ml-2 h-4 w-4" />
-                  </span>
-                </CardFooter>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  <CardHeader>
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">{post.category}</Badge>
+                    </div>
+                    <h3 className="text-xl font-semibold group-hover:underline">{post.title}</h3>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={palette.subtle}>{post.summary}</p>
+                  </CardContent>
+                  <CardFooter className="flex flex-col gap-4">
+                    <div className="flex w-full items-center gap-3 text-sm">
+                      <Avatar className="h-6 w-6"><AvatarFallback>{post.author[0]}</AvatarFallback></Avatar>
+                      <span className="text-xs">{post.author}</span>
+                      <span className={`text-xs ${palette.subtle}`}>&bull;</span>
+                      <span className={`text-xs ${palette.subtle}`}>{post.readTime} min</span>
+                    </div>
+                    <span className="flex w-full items-center justify-start p-0 text-sm hover:underline">
+                      Read more <ArrowRight className="ml-2 h-4 w-4" />
+                    </span>
+                  </CardFooter>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+
         <div className="mt-8 text-center">
           <Link to="/blog"><Button variant="outline">View All Articles <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
         </div>
@@ -188,7 +261,7 @@ export default function HomePage() {
           {/* 1. Contribute Code */}
           <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
             <div className="flex items-start gap-4">
-              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
                 <Code className="h-5 w-5" />
               </div>
               <div className="flex-1">
@@ -196,7 +269,7 @@ export default function HomePage() {
                 <p className={`mb-4 ${palette.subtle}`}>Help build and improve the platform. Follow these steps to submit your first pull request:</p>
                 <div className="space-y-3">
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">1</span>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">1</span>
                     <div>
                       <div className="font-medium">Fork and clone the repository</div>
                       <div className="relative mt-1">
@@ -205,21 +278,21 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">2</span>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">2</span>
                     <div>
                       <div className="font-medium">Create a feature branch</div>
                       <pre className={`mt-1 overflow-x-auto rounded-lg border p-3 text-sm ${palette.border} ${palette.highlight}`}><code>git checkout -b feat/your-feature-name</code></pre>
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">3</span>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">3</span>
                     <div>
                       <div className="font-medium">Make your changes, commit, and push</div>
                       <pre className={`mt-1 overflow-x-auto rounded-lg border p-3 text-sm ${palette.border} ${palette.highlight}`}><code>git add .{"\n"}git commit -m "feat: add multilingual support for Swahili"{"\n"}git push origin feat/your-feature-name</code></pre>
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">4</span>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">4</span>
                     <div>
                       <div className="font-medium">Open a Pull Request</div>
                       <p className={`mt-1 text-sm ${palette.subtle}`}>
@@ -239,7 +312,7 @@ export default function HomePage() {
           {/* 2. Write a Blog Post */}
           <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
             <div className="flex items-start gap-4">
-              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
                 <PenLine className="h-5 w-5" />
               </div>
               <div className="flex-1">
@@ -247,15 +320,15 @@ export default function HomePage() {
                 <p className={`mb-4 ${palette.subtle}`}>Share your experience, insights, or case studies with the OpenCHS community.</p>
                 <div className="space-y-3">
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">1</span>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">1</span>
                     <div><div className="font-medium">Choose a topic</div><p className={`mt-1 text-sm ${palette.subtle}`}>Deployment stories, technical deep-dives, AI/ML insights, policy and governance, or impact reports.</p></div>
                   </div>
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">2</span>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">2</span>
                     <div><div className="font-medium">Draft your article</div><p className={`mt-1 text-sm ${palette.subtle}`}>Write in Markdown, 800–2000 words. Include code snippets, data, or screenshots where they add value.</p></div>
                   </div>
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">3</span>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-bold dark:bg-neutral-800">3</span>
                     <div><div className="font-medium">Submit for review</div><p className={`mt-1 text-sm ${palette.subtle}`}>Email your draft to <a href="mailto:blog@openchs.org" className="font-medium underline underline-offset-2">blog@openchs.org</a> or open a PR to the <code className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-800">content/blog</code> directory.</p></div>
                   </div>
                 </div>
@@ -266,16 +339,16 @@ export default function HomePage() {
           {/* 3. Fund the Mission */}
           <div className={`rounded-2xl border p-8 ${palette.border} ${palette.card}`}>
             <div className="flex items-start gap-4">
-              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${palette.border} ${palette.accent}`}>
                 <Heart className="h-5 w-5" />
               </div>
               <div className="flex-1">
                 <h3 className="mb-3 text-xl font-semibold">3. Fund the Mission</h3>
                 <p className={`mb-4 ${palette.subtle}`}>Your financial support directly enables child protection in underserved regions.</p>
                 <div className="space-y-3">
-                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 flex-shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Sponsor development</div><p className={`mt-1 text-sm ${palette.subtle}`}>Fund specific features like multilingual AI models, offline-first capabilities, or mobile apps.</p></div></div>
-                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 flex-shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Support deployments</div><p className={`mt-1 text-sm ${palette.subtle}`}>Help cover infrastructure, training, and onboarding costs. Each deployment costs ~$15,000–$30,000 to launch.</p></div></div>
-                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 flex-shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Partner with us</div><p className={`mt-1 text-sm ${palette.subtle}`}>We work with NGOs, governments, and private sector partners. <Link to="/contact" className="font-medium underline underline-offset-2">Reach out</Link> to discuss.</p></div></div>
+                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Sponsor development</div><p className={`mt-1 text-sm ${palette.subtle}`}>Fund specific features like multilingual AI models, offline-first capabilities, or mobile apps.</p></div></div>
+                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Support deployments</div><p className={`mt-1 text-sm ${palette.subtle}`}>Help cover infrastructure, training, and onboarding costs. Each deployment costs ~$15,000–$30,000 to launch.</p></div></div>
+                  <div className="flex gap-3"><DollarSign className={`mt-0.5 h-5 w-5 shrink-0 ${palette.subtle}`} /><div><div className="font-medium">Partner with us</div><p className={`mt-1 text-sm ${palette.subtle}`}>We work with NGOs, governments, and private sector partners. <Link to="/contact" className="font-medium underline underline-offset-2">Reach out</Link> to discuss.</p></div></div>
                 </div>
               </div>
             </div>
@@ -302,6 +375,11 @@ export default function HomePage() {
                   Message sent successfully! We'll get back to you soon.
                 </div>
               )}
+              {contactError && (
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-center text-sm text-red-600 dark:text-red-400">
+                  {contactError}
+                </div>
+              )}
               <div>
                 <label htmlFor="c-name" className="mb-2 block text-sm font-medium">Name</label>
                 <Input id="c-name" placeholder="Your name" value={contactForm.name} onChange={(e) => setContactForm((f) => ({ ...f, name: e.target.value }))} className={palette.border} required />
@@ -314,7 +392,9 @@ export default function HomePage() {
                 <label htmlFor="c-message" className="mb-2 block text-sm font-medium">Message</label>
                 <textarea id="c-message" rows={4} placeholder="Tell us about your interest..." value={contactForm.message} onChange={(e) => setContactForm((f) => ({ ...f, message: e.target.value }))} className={`w-full resize-none rounded-lg border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${palette.border}`} required />
               </div>
-              <Button type="submit" className="w-full">Send Message <Send className="ml-2 h-4 w-4" /></Button>
+              <Button type="submit" className="w-full" disabled={contactSubmitting}>
+                {contactSubmitting ? "Sending…" : "Send Message"} <Send className="ml-2 h-4 w-4" />
+              </Button>
             </form>
           </div>
         </div>
@@ -338,7 +418,7 @@ export default function HomePage() {
                     <p className={palette.subtle}>{faq.a}</p>
                   </div>
                 </div>
-                <ChevronDown className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${openFaq === idx ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-5 w-5 shrink-0 transition-transform duration-300 ${openFaq === idx ? "rotate-180" : ""}`} />
               </div>
             </button>
           ))}
@@ -355,9 +435,14 @@ export default function HomePage() {
               Thank you for subscribing!
             </div>
           )}
+          {subscribeError && (
+            <div className="mx-auto mb-4 max-w-md rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
+              {subscribeError}
+            </div>
+          )}
           <form onSubmit={handleSubscribe} className="mx-auto flex max-w-md gap-2">
             <Input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className={`flex-1 ${palette.border}`} required />
-            <Button type="submit">Subscribe</Button>
+            <Button type="submit" disabled={subscribing}>{subscribing ? "Subscribing…" : "Subscribe"}</Button>
           </form>
         </div>
       </section>

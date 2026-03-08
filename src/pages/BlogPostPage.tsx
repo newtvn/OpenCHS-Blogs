@@ -4,29 +4,55 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { usePalette } from "@/hooks/useTheme";
-import { getPostBySlug, blogPosts } from "@/data/blogPosts";
+import type { BlogPostResponse } from "@/data/blogPosts";
+import { useApi } from "@/hooks/useApi";
 import SEO from "@/components/SEO";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import ReadingProgress from "@/components/ReadingProgress";
 import LazyImage from "@/components/LazyImage";
 import { useState } from "react";
 
+function PostSkeleton({ palette }: { palette: { border: string; card: string; subtle: string } }) {
+  return (
+    <article className="mx-auto w-full max-w-4xl animate-pulse px-6 py-16 lg:px-12">
+      <div className="mb-8 h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-800" />
+      <div className="mb-8 space-y-4">
+        <div className="h-3 w-32 rounded bg-neutral-200 dark:bg-neutral-800" />
+        <div className="h-10 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
+        <div className="h-5 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
+        <div className="h-5 w-5/6 rounded bg-neutral-200 dark:bg-neutral-800" />
+      </div>
+      <div className="mb-12 aspect-video w-full overflow-hidden rounded-2xl bg-neutral-200 dark:bg-neutral-800" />
+      <div className="space-y-4">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-4 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
+        ))}
+      </div>
+    </article>
+  );
+}
+
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
   const { palette } = usePalette();
-  const post = slug ? getPostBySlug(slug) : undefined;
   const [linkCopied, setLinkCopied] = useState(false);
 
+  const { data, loading, error } = useApi<BlogPostResponse>(
+    `/blog/posts/${slug ?? ""}`,
+    { skip: !slug }
+  );
+
+  // While loading, show skeleton.
+  if (loading) return <PostSkeleton palette={palette} />;
+
+  // If there was an error or the slug is missing, redirect to the list.
+  if (error || !slug) return <Navigate to="/blog" replace />;
+
+  const post = data?.data;
   if (!post) return <Navigate to="/blog" replace />;
 
-  const currentIdx = blogPosts.findIndex((p) => p.id === post.id);
-  const prev = currentIdx > 0 ? blogPosts[currentIdx - 1] : null;
-  const next = currentIdx < blogPosts.length - 1 ? blogPosts[currentIdx + 1] : null;
-
-  // Related posts: same category, excluding current
-  const related = blogPosts
-    .filter((p) => p.category === post.category && p.id !== post.id)
-    .slice(0, 2);
+  const prev = post.prev ?? null;
+  const next = post.next ?? null;
 
   const shareUrl = window.location.href;
   const shareText = encodeURIComponent(post.title);
@@ -75,7 +101,7 @@ export default function BlogPostPage() {
 
         {/* Hero image */}
         <div className="mb-12 overflow-hidden rounded-2xl">
-          <LazyImage src={post.image} alt={post.title} className="aspect-[16/9] w-full" />
+          <LazyImage src={post.image} alt={post.title} className="aspect-video w-full" />
         </div>
 
         {/* Content */}
@@ -114,24 +140,7 @@ export default function BlogPostPage() {
           </div>
         </div>
 
-        {/* Related posts */}
-        {related.length > 0 && (
-          <div className={`mt-12 border-t pt-8 ${palette.border}`}>
-            <h2 className="mb-6 text-xl font-semibold">Related Articles</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {related.map((rp) => (
-                <Link key={rp.id} to={`/blog/${rp.slug}`} className={`group rounded-xl border p-4 transition hover:scale-[1.02] ${palette.border} ${palette.card}`}>
-                  <LazyImage src={rp.image} alt={rp.title} className="mb-3 aspect-[16/9] w-full rounded-lg" />
-                  <Badge variant="outline" className="mb-2 text-xs">{rp.category}</Badge>
-                  <h3 className="font-semibold group-hover:underline">{rp.title}</h3>
-                  <p className={`mt-1 line-clamp-2 text-sm ${palette.subtle}`}>{rp.summary}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Prev / Next */}
+        {/* Prev / Next — sourced from API */}
         <div className={`mt-12 grid gap-4 border-t pt-8 sm:grid-cols-2 ${palette.border}`}>
           {prev ? (
             <Link to={`/blog/${prev.slug}`} className={`group rounded-xl border p-6 transition hover:scale-[1.02] ${palette.border} ${palette.card}`}>

@@ -3,18 +3,46 @@ import { Github, ExternalLink, Heart } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { usePalette } from "@/hooks/useTheme";
+import { useApi } from "@/hooks/useApi";
 import SEO from "@/components/SEO";
 import Breadcrumbs from "@/components/Breadcrumbs";
 
-const contributors = [
-  { name: "Newtvn", role: "Design Engineer", contributions: 342, areas: ["UI/UX Design", "Frontend", "Responsive Design", "Accessibility"] },
-  { name: "Rodgendo", role: "AI Lead", contributions: 289, areas: ["ML Engineering", "NLP Pipeline", "DevOps", "Risk Scoring"] },
-  { name: "Franklin", role: "Technical Lead", contributions: 156, areas: ["ML Engineering", "AI Models", "DevOps", "Infrastructure"] },
-  { name: "Miriam", role: "OpenCHS AI", contributions: 134, areas: ["ML Engineering", "Data Pipeline", "DevOps", "Monitoring"] },
-];
+interface Contributor {
+  name: string;
+  role: string;
+  contributions: number;
+  areas: string[];
+}
+
+interface ContributorsResponse {
+  data: Contributor[];
+}
+
+function ContributorSkeleton({ palette }: { palette: { border: string; card: string; subtle: string } }) {
+  return (
+    <div className={`animate-pulse rounded-2xl border p-6 ${palette.border} ${palette.card}`}>
+      <div className="mb-4 flex items-center gap-3">
+        <div className="h-12 w-12 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+        <div className="space-y-2">
+          <div className="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-800" />
+          <div className="h-3 w-16 rounded bg-neutral-200 dark:bg-neutral-800" />
+        </div>
+      </div>
+      <div className="mb-3 h-3 w-28 rounded bg-neutral-200 dark:bg-neutral-800" />
+      <div className="flex flex-wrap gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-5 w-16 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ContributorsPage() {
   const { palette } = usePalette();
+
+  const { data, loading, error } = useApi<ContributorsResponse>("/contributors");
+  const contributors = data?.data ?? [];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-12">
@@ -26,31 +54,50 @@ export default function ContributorsPage() {
         OpenCHS is built by a passionate community of developers, designers, and child protection experts.
       </p>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {contributors.map((c, idx) => (
-          <div key={idx} className={`rounded-2xl border p-6 transition hover:scale-[1.02] ${palette.border} ${palette.card}`}>
-            <div className="mb-4 flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="text-lg">{c.name[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold">{c.name}</div>
-                <div className={`text-xs ${palette.subtle}`}>{c.role}</div>
+      {/* Loading skeletons */}
+      {loading && (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <ContributorSkeleton key={i} palette={palette} />
+          ))}
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && !loading && (
+        <p className={`py-12 text-center text-lg ${palette.subtle}`}>
+          Could not load contributors. Please try again later.
+        </p>
+      )}
+
+      {/* Contributors grid */}
+      {!loading && !error && contributors.length > 0 && (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {contributors.map((c, idx) => (
+            <div key={idx} className={`rounded-2xl border p-6 transition hover:scale-[1.02] ${palette.border} ${palette.card}`}>
+              <div className="mb-4 flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="text-lg">{c.name[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-semibold">{c.name}</div>
+                  <div className={`text-xs ${palette.subtle}`}>{c.role}</div>
+                </div>
+              </div>
+              <div className={`mb-3 text-sm ${palette.subtle}`}>
+                {c.contributions} contributions
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {c.areas.map((area) => (
+                  <span key={area} className={`rounded-full border px-2 py-0.5 text-xs ${palette.border} ${palette.accent}`}>
+                    {area}
+                  </span>
+                ))}
               </div>
             </div>
-            <div className={`mb-3 text-sm ${palette.subtle}`}>
-              {c.contributions} contributions
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {c.areas.map((area) => (
-                <span key={area} className={`rounded-full border px-2 py-0.5 text-xs ${palette.border} ${palette.accent}`}>
-                  {area}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* How to contribute */}
       <div className={`mt-16 rounded-3xl border p-8 md:p-12 ${palette.border} ${palette.card}`}>
@@ -58,7 +105,7 @@ export default function ContributorsPage() {
         <div className="grid gap-8 md:grid-cols-3">
           <div className="text-center">
             <Github className="mx-auto mb-4 h-10 w-10" />
-            <h3 className="mb-2 font-semibold">Fork & Contribute</h3>
+            <h3 className="mb-2 font-semibold">Fork &amp; Contribute</h3>
             <p className={`mb-4 text-sm ${palette.subtle}`}>Browse open issues, submit PRs, and help improve the platform.</p>
             <a href="https://github.com/openchlai" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">View on GitHub <ExternalLink className="ml-2 h-3 w-3" /></Button>
